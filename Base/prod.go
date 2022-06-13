@@ -75,7 +75,6 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 	if string(ctx.Method()) == "GET" {
 		switch string(ctx.Path()) {
 		case "/":
-			fmt.Println("HOLA")
 			fmt.Fprintf(ctx, "HOLA")
 		default:
 			ctx.Error("Not Found", fasthttp.StatusNotFound)
