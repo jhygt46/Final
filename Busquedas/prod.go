@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"math"
+	"math/big"
 	"os"
 	"os/signal"
 	"runtime"
@@ -114,10 +115,10 @@ func main() {
 	var port string
 	if runtime.GOOS == "windows" {
 		port = ":81"
-		cfg.DataDir = "C:/Go/Pruebas/LedisDb/var"
+		cfg.DataDir = "C:/Go/LedisDB"
 	} else {
 		port = ":80"
-		cfg.DataDir = "C:/Go/Pruebas/LedisDb/var"
+		cfg.DataDir = "/var/Go/LedisDB"
 	}
 
 	l, _ := ledis.Open(cfg)
@@ -129,6 +130,8 @@ func main() {
 		Empresas: make(map[uint32][]byte, 0),
 		Catalogo: make(map[uint32][]byte, 0),
 	}
+
+	pass.SaveDb()
 
 	con := context.Background()
 	con, cancel := context.WithCancel(con)
@@ -162,6 +165,55 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
+}
+func (h *MyHandler) SaveDb() {
+
+	Filtros := []Filtros{
+		Filtros{T: 0, V: []uint16{1}},
+		Filtros{T: 0, V: []uint16{2}},
+		Filtros{T: 0, V: []uint16{3}},
+	}
+	/*
+		Filtros := []Filtros{
+			Filtros{T: 0, V: []uint16{1}},
+			Filtros{T: 1, V: []uint16{1, 2, 3, 4}},
+			Filtros{T: 1, R: []uint32{700, 900}},
+			Filtros{T: 1, P: []FiltroconPrecios{FiltroconPrecios{Id: 0, Precio: 2000}}},
+		}
+		h.Prods[400] = CreateProdMemoryBytes(Prods{Nombre: "BuenaNelson", Calidad: 243, Filtros: Filtros, Evals: Evals})
+		h.Empresas[70000] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[1] = []byte{1, 1, 9, 0, 1, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 2, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 3, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 4, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 5, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 6, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 7, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 8, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 9, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243}
+	*/
+
+	Evals := []uint8{128, 242, 138, 188, 205, 231}
+
+	prods := []Prods{}
+	var n string
+	for i := 1; i <= 500; i++ {
+		n = fmt.Sprintf("P%v", i)
+		prods = append(prods, Prods{Id: uint64(i), Tipo: 0, Nombre: n, Precio: uint64(13500 + i*100), Calidad: 243, Filtros: Filtros, Evals: Evals})
+	}
+	Emp1 := Empresa{Id: 70001, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin1", Prods: prods}
+	Emp2 := Empresa{Id: 70002, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin2", Prods: prods}
+	Emp3 := Empresa{Id: 70003, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin3", Prods: prods}
+	Emp4 := Empresa{Id: 70004, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin4", Prods: prods}
+	Emp5 := Empresa{Id: 70005, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin5", Prods: prods}
+	Emp6 := Empresa{Id: 70006, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin6", Prods: prods}
+
+	buf := []byte{}
+	arrEmp := []*Empresa{&Emp1, &Emp2, &Emp3, &Emp4, &Emp5, &Emp6}
+	for _, e := range arrEmp {
+		buf = append(buf, h.EncodeBytes(*e)...)
+	}
+
+	for i := uint32(0); i < 10; i++ {
+		for j := uint32(0); j < 50; j++ {
+			key := append(Int32tobytes(i), Int32tobytes(j)...)
+			h.Db.Set(key, buf)
+		}
+	}
+	fmt.Println("SAVE DB")
+
 }
 func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
@@ -660,3 +712,280 @@ func run(con context.Context, c *MyHandler, stdout io.Writer) error {
 		}
 	}
 }
+
+// DAEMON //
+
+// ENCODE BYTES //
+func (h *MyHandler) EncodeBytes(emp Empresa) []byte {
+
+	buf := []byte{}
+
+	var num int = 0
+	num = num + Recalculate2(GetCountBytesInt32(emp.Id))*9
+	CatBytes := h.GetBytesProds(emp.Prods)
+
+	var foundEmp bool = false
+	var foundCat bool = false
+
+	if _, foundEmp = h.Empresas[emp.Id]; foundEmp {
+
+		num += 54
+		num = num + Recalculate1(GetCountBytesInt32(emp.IdLoc))*3
+
+		if _, foundCat = h.Catalogo[emp.IdCat]; foundCat {
+			num += 27
+		} else {
+			num += Recalculate1(GetCountBytesInt32(uint32(len(CatBytes))))
+		}
+	} else {
+		num += Recalculate1(GetCountBytesInt32(uint32(len(CatBytes))))
+	}
+
+	buf = AddBytes(buf, []byte{uint8(num)})
+	buf = AddBytes(buf, Min2Bytes(IntToBytes(int(emp.Id))))
+	if foundEmp {
+		buf = AddBytes(buf, IntToBytes(int(emp.IdLoc)))
+		if foundCat {
+			buf = AddBytes(buf, IntToBytes(int(emp.IdCat)))
+		}
+	} else {
+		buf = AddBytes(buf, float32ToByte(emp.Lat))
+		buf = AddBytes(buf, float32ToByte(emp.Lng))
+		NombreEmpresa := []byte(emp.Nombre)
+
+		buf = AddBytes(buf, IntToBytes(len(NombreEmpresa)))
+		buf = AddBytes(buf, NombreEmpresa)
+
+	}
+	if !foundCat {
+		buf = AddBytes(buf, IntToBytes(len(CatBytes)))
+		buf = AddBytes(buf, CatBytes)
+	}
+
+	return buf
+}
+func (h *MyHandler) GetBytesProds(prods []Prods) []byte {
+
+	resProd := make(map[int][]Prods, 256)
+	buf := []byte{}
+
+	var num int = 0
+	var CountId int
+	var CountPrecio int
+	var foundPro bool
+	var MemPro []byte
+
+	for _, prod := range prods {
+
+		if MemPro, foundPro = h.Prods[uint32(prod.Id)]; foundPro {
+
+			num = 0
+			_, ProF, ProE := DecProMem(MemPro[0])
+			if ProF == 1 {
+				num = num + 2
+			}
+			if ProE == 1 {
+				num = num + 4
+			}
+
+		} else {
+
+			num = 1
+			num = num + prod.Tipo*96
+
+			if prod.Filtros != nil {
+				num = num + 2
+			}
+			if prod.Evals != nil {
+				num = num + 4
+			}
+
+		}
+		CountId = GetCountBytesInt64(prod.Id) - 2
+		if CountId == -1 {
+			CountId = 0
+		}
+		num = num + CountId*8
+
+		CountPrecio = GetCountBytesInt64(prod.Precio) - 2
+		if CountPrecio == -1 {
+			CountPrecio = 0
+		}
+		num = num + CountPrecio*24
+		resProd[num] = append(resProd[num], prod)
+	}
+
+	buf = AddBytes(buf, IntToBytes(len(resProd)))
+
+	for v, lprod := range resProd {
+
+		buf = AddBytes(buf, IntToBytes(v))
+		_, _, _, Eval, Filtro, TipoId := DecProd(uint8(v))
+
+		LenProd, EncodeErr := EncodeSpecialBytes(len(lprod), 200)
+		if EncodeErr {
+			buf = AddBytes(buf, LenProd)
+		}
+
+		for _, prodr := range lprod {
+			if TipoId == 0 {
+				buf = AddBytes(buf, Min2Bytes(IntToBytes(int(prodr.Id))))
+				buf = AddBytes(buf, Min2Bytes(IntToBytes(int(prodr.Precio))))
+			}
+			if TipoId == 1 {
+				buf = AddBytes(buf, Min2Bytes(IntToBytes(int(prodr.Id))))
+				buf = AddBytes(buf, Min2Bytes(IntToBytes(int(prodr.Precio))))
+				nombrebytes := []byte(prodr.Nombre)
+				buf = AddBytes(buf, IntToBytes(len(nombrebytes)))
+				buf = AddBytes(buf, nombrebytes)
+				buf = AddBytes(buf, []byte{prodr.Calidad})
+			}
+			if Filtro == 1 {
+				//fmt.Println(BytesFiltros(prodr.Filtros))
+				buf = AddBytes(buf, BytesFiltros(prodr.Filtros))
+			}
+			if Eval == 1 {
+				buf = AddBytes(buf, BytesEvals(prodr.Evals))
+			}
+		}
+	}
+
+	return buf
+}
+func GetCountBytesInt64(num uint64) int {
+
+	if num <= 255 {
+		return 1
+	}
+	if num <= 65535 {
+		return 2
+	}
+	if num <= 16777215 {
+		return 3
+	}
+	if num <= 4294967295 {
+		return 4
+	}
+	if num <= 1099511627775 {
+		return 5
+	}
+	if num <= 281474976710655 {
+		return 6
+	}
+	if num <= 72057594037927935 {
+		return 7
+	}
+	if num <= 18446744073709551615 {
+		return 8
+	}
+	return 0
+}
+func GetCountBytesInt32(num uint32) int {
+
+	if num <= 255 {
+		return 1
+	}
+	if num <= 65535 {
+		return 2
+	}
+	if num <= 16777215 {
+		return 3
+	}
+	return 4
+}
+func AddBytes(buf []byte, bytes []byte) []byte {
+	return append(buf, bytes...)
+}
+func IntToBytes(n int) []byte {
+	if n == 0 {
+		return []byte{0}
+	}
+	return big.NewInt(int64(n)).Bytes()
+}
+func Min2Bytes(bytes []byte) []byte {
+	if len(bytes) == 1 {
+		b := []byte{0}
+		b = append(b, bytes...)
+		return b
+	}
+	return bytes
+}
+func float32ToByte(f float32) []byte {
+	var buf [4]byte
+	binary.BigEndian.PutUint32(buf[:], math.Float32bits(f))
+	return buf[:]
+}
+func Recalculate1(n int) int {
+	return n - 1
+}
+func Recalculate2(n int) int {
+	if n <= 2 {
+		return 0
+	} else {
+		return n - 2
+	}
+}
+func BytesFiltros(filtros []Filtros) []byte {
+
+	buf := []byte{}
+
+	var num int
+	var lenV int
+	var lenP int
+	var lenR int
+
+	for i, Filtro := range filtros {
+
+		lenV = len(Filtro.V)
+		lenP = len(Filtro.P)
+		lenR = len(Filtro.R)
+
+		num = 0
+		if lenV == 1 && lenP == 0 && lenR == 0 && Filtro.T == 0 {
+			if Filtro.V[0] > 255 {
+				num = num + 2
+			}
+			num = num + i*4
+			buf = AddBytes(buf, IntToBytes(int(num)))
+			buf = AddBytes(buf, IntToBytes(int(Filtro.V[0])))
+		} else if lenV > 1 && lenP == 0 && lenR == 0 {
+			num = num + 1
+		} else if lenV == 0 && lenP == 1 && lenR == 0 {
+			num = num + 2
+		} else if lenV == 0 && lenP == 0 && lenR > 0 {
+			num = num + 3
+		} else {
+			fmt.Println("ERROR FILTRO")
+		}
+
+	}
+
+	LenProd, EncodeErr := EncodeSpecialBytes(len(buf), 200)
+	if EncodeErr {
+		buf2 := []byte{}
+		buf2 = AddBytes(buf2, LenProd)
+		return append(buf2, buf...)
+	} else {
+		return []byte{0}
+	}
+}
+func BytesEvals(Evals []uint8) []byte {
+	return append(IntToBytes(len(Evals)), Evals...)
+}
+func EncodeSpecialBytes(num int, limit int) ([]byte, bool) {
+	max := (255-limit)*256 + 255
+	if num <= max {
+		if num < limit {
+			return []byte{uint8(num)}, true
+		} else {
+			x := num - limit
+			b1 := x/256 + limit
+			b2 := x % 256
+			return []byte{uint8(b1), uint8(b2)}, true
+		}
+	} else {
+		return nil, false
+	}
+}
+
+// ENCODE BYTES //
