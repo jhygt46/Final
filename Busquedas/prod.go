@@ -166,61 +166,13 @@ func main() {
 		os.Exit(1)
 	}
 }
-func (h *MyHandler) SaveDb() {
 
-	Filtros := []Filtros{
-		Filtros{T: 0, V: []uint16{1}},
-		Filtros{T: 0, V: []uint16{2}},
-		Filtros{T: 0, V: []uint16{3}},
-	}
-	/*
-		Filtros := []Filtros{
-			Filtros{T: 0, V: []uint16{1}},
-			Filtros{T: 1, V: []uint16{1, 2, 3, 4}},
-			Filtros{T: 1, R: []uint32{700, 900}},
-			Filtros{T: 1, P: []FiltroconPrecios{FiltroconPrecios{Id: 0, Precio: 2000}}},
-		}
-		h.Prods[400] = CreateProdMemoryBytes(Prods{Nombre: "BuenaNelson", Calidad: 243, Filtros: Filtros, Evals: Evals})
-		h.Empresas[70000] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
-		h.Catalogo[1] = []byte{1, 1, 9, 0, 1, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 2, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 3, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 4, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 5, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 6, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 7, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 8, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 9, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243}
-	*/
-
-	Evals := []uint8{128, 242, 138, 188, 205, 231}
-
-	prods := []Prods{}
-	var n string
-	for i := 1; i <= 500; i++ {
-		n = fmt.Sprintf("P%v", i)
-		prods = append(prods, Prods{Id: uint64(i), Tipo: 0, Nombre: n, Precio: uint64(13500 + i*100), Calidad: 243, Filtros: Filtros, Evals: Evals})
-	}
-	Emp1 := Empresa{Id: 70001, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin1", Prods: prods}
-	Emp2 := Empresa{Id: 70002, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin2", Prods: prods}
-	Emp3 := Empresa{Id: 70003, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin3", Prods: prods}
-	Emp4 := Empresa{Id: 70004, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin4", Prods: prods}
-	Emp5 := Empresa{Id: 70005, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin5", Prods: prods}
-	Emp6 := Empresa{Id: 70006, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin6", Prods: prods}
-
-	buf := []byte{}
-	arrEmp := []*Empresa{&Emp1, &Emp2, &Emp3, &Emp4, &Emp5, &Emp6}
-	for _, e := range arrEmp {
-		buf = append(buf, h.EncodeBytes(*e)...)
-	}
-
-	for i := uint32(0); i < 10; i++ {
-		for j := uint32(0); j < 50; j++ {
-			key := append(Int32tobytes(i), Int32tobytes(j)...)
-			h.Db.Set(key, buf)
-		}
-	}
-	fmt.Println("SAVE DB")
-
-}
 func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
 	if string(ctx.Method()) == "GET" {
 		switch string(ctx.Path()) {
 		case "/":
-			now := time.Now()
+			//now := time.Now()
 			var p Params
 			if err := json.Unmarshal(ctx.QueryArgs().Peek("p"), &p); err == nil {
 				if len(p.O) == 4 {
@@ -283,7 +235,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 			} else {
 				fmt.Fprintf(ctx, "ErrorDecode")
 			}
-			fmt.Println("time elapse:", time.Since(now))
+			//fmt.Println("time elapse:", time.Since(now))
 		default:
 			ctx.Error("Not Found", fasthttp.StatusNotFound)
 		}
@@ -716,6 +668,54 @@ func run(con context.Context, c *MyHandler, stdout io.Writer) error {
 // DAEMON //
 
 // ENCODE BYTES //
+func (h *MyHandler) SaveDb() {
+
+	Filtros := []Filtros{
+		Filtros{T: 0, V: []uint16{1}},
+		Filtros{T: 0, V: []uint16{2}},
+		Filtros{T: 0, V: []uint16{3}},
+	}
+	/*
+		Filtros := []Filtros{
+			Filtros{T: 0, V: []uint16{1}},
+			Filtros{T: 1, V: []uint16{1, 2, 3, 4}},
+			Filtros{T: 1, R: []uint32{700, 900}},
+			Filtros{T: 1, P: []FiltroconPrecios{FiltroconPrecios{Id: 0, Precio: 2000}}},
+		}
+		h.Prods[400] = CreateProdMemoryBytes(Prods{Nombre: "BuenaNelson", Calidad: 243, Filtros: Filtros, Evals: Evals})
+		h.Empresas[70000] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[1] = []byte{1, 1, 9, 0, 1, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 2, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 3, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 4, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 5, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 6, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 7, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 8, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243, 0, 9, 13, 172, 11, 80, 114, 111, 100, 117, 99, 116, 111, 32, 66, 49, 243}
+	*/
+
+	Evals := []uint8{128, 242, 138, 188, 205, 231}
+
+	prods := []Prods{}
+	var n string
+	for i := 1; i <= 500; i++ {
+		n = fmt.Sprintf("P%v", i)
+		prods = append(prods, Prods{Id: uint64(i), Tipo: 0, Nombre: n, Precio: uint64(13500 + i*100), Calidad: 243, Filtros: Filtros, Evals: Evals})
+	}
+	Emp1 := Empresa{Id: 70001, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin1", Prods: prods}
+	Emp2 := Empresa{Id: 70002, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin2", Prods: prods}
+	Emp3 := Empresa{Id: 70003, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin3", Prods: prods}
+	Emp4 := Empresa{Id: 70004, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin4", Prods: prods}
+	Emp5 := Empresa{Id: 70005, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin5", Prods: prods}
+	Emp6 := Empresa{Id: 70006, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin6", Prods: prods}
+
+	buf := []byte{}
+	arrEmp := []*Empresa{&Emp1, &Emp2, &Emp3, &Emp4, &Emp5, &Emp6}
+	for _, e := range arrEmp {
+		buf = append(buf, h.EncodeBytes(*e)...)
+	}
+
+	for i := uint32(0); i < 10; i++ {
+		for j := uint32(0); j < 50; j++ {
+			key := append(Int32tobytes(i), Int32tobytes(j)...)
+			h.Db.Set(key, buf)
+		}
+	}
+	fmt.Println("SAVE DB")
+}
 func (h *MyHandler) EncodeBytes(emp Empresa) []byte {
 
 	buf := []byte{}
