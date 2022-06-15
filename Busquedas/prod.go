@@ -172,7 +172,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 	if string(ctx.Method()) == "GET" {
 		switch string(ctx.Path()) {
 		case "/":
-			now := time.Now()
+			//now := time.Now()
 			var p Params
 			if err := json.Unmarshal(ctx.QueryArgs().Peek("p"), &p); err == nil {
 				if len(p.O) == 3 {
@@ -229,6 +229,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 						}
 					}
 					b.Write([]byte{93, 125})
+					fmt.Println(b.String())
 					fmt.Fprint(ctx, b.String())
 				} else {
 					fmt.Fprintf(ctx, "ErrorHTTP")
@@ -236,7 +237,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 			} else {
 				fmt.Fprintf(ctx, "ErrorDecode")
 			}
-			fmt.Println("time elapse:", time.Since(now))
+			//fmt.Println("time elapse:", time.Since(now))
 		default:
 			ctx.Error("Not Found", fasthttp.StatusNotFound)
 		}
