@@ -229,7 +229,6 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 						}
 					}
 					b.Write([]byte{93, 125})
-					fmt.Println(b.String())
 					fmt.Fprint(ctx, b.String())
 				} else {
 					fmt.Fprintf(ctx, "ErrorHTTP")
