@@ -205,7 +205,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					Res := Respuesta{Prods: make([]ResProd, 0, P.L), Emps: make([]ResEmp, 0, P.L), Count: 0}
 					cat := ParamBytes(ctx.QueryArgs().Peek("c"))
 
-					fmt.Println("CAT_CUAD", cat, p.C[0])
+					//fmt.Println("CAT_CUAD", cat, p.C[0])
 
 					for _, cuad := range p.C {
 						key = append(cat, Int32tobytes(cuad)...)
