@@ -173,7 +173,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
 		case "/":
 
-			fmt.Println("Param C", ParamBytes(ctx.QueryArgs().Peek("c")))
+			fmt.Println("Param C", ctx.QueryArgs().Peek("c"))
 			fmt.Println("Param P", ctx.QueryArgs().Peek("p"))
 
 			now := time.Now()
