@@ -172,7 +172,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 	if string(ctx.Method()) == "GET" {
 		switch string(ctx.Path()) {
 		case "/":
-			//now := time.Now()
+			now := time.Now()
 			var p Params
 			if err := json.Unmarshal(ctx.QueryArgs().Peek("p"), &p); err == nil {
 				if len(p.O) == 3 {
@@ -204,6 +204,9 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					}
 					Res := Respuesta{Prods: make([]ResProd, 0, P.L), Emps: make([]ResEmp, 0, P.L), Count: 0}
 					cat := ParamBytes(ctx.QueryArgs().Peek("c"))
+
+					fmt.Println("CAT_CUAD", cat, p.C[0])
+
 					for _, cuad := range p.C {
 						key = append(cat, Int32tobytes(cuad)...)
 						val, _ := h.Db.Get(key)
@@ -234,9 +237,8 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 				}
 			} else {
 				fmt.Fprintf(ctx, "ErrorDecode")
-				fmt.Println(err)
 			}
-			//fmt.Println("time elapse:", time.Since(now))
+			fmt.Println("time elapse:", time.Since(now))
 		default:
 			ctx.Error("Not Found", fasthttp.StatusNotFound)
 		}
@@ -435,7 +437,7 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 
 							Silence(NombreP, d)
 
-							Nota = (m*(float64(Precio)-x1)+y1)*(P.O[0]/P.O[3]) + (m*(float64(Distancia)-x1)+y1)*(P.O[1]/P.O[3]) + (m*(float64(Calidad)-x1)+y1)*(P.O[2]/P.O[3])
+							Nota = (m*(float64(Precio)-x1)+y1)*(P.O[0]/P.SO) + (m*(float64(Distancia)-x1)+y1)*(P.O[1]/P.SO) + (m*(float64(Calidad)-x1)+y1)*(P.O[2]/P.SO)
 
 							if len(Res.Prods) < P.L {
 								Res.Prods = append(Res.Prods, ResProd{Id: IdProd, Distancia: Distancia, Nombre: NombreP, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId})
