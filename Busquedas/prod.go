@@ -691,9 +691,10 @@ func (h *MyHandler) SaveDb() {
 
 	prods := []Prods{}
 	var n string
-	for i := 1; i <= 500; i++ {
-		n = fmt.Sprintf("P%v", i)
-		prods = append(prods, Prods{Id: uint64(i), Tipo: 0, Nombre: n, Precio: uint64(13500 + i*100), Calidad: 243, Filtros: Filtros, Evals: Evals})
+	var z int = 50
+	for x := 1; x <= z; x++ {
+		n = fmt.Sprintf("Producto-%v", x)
+		prods = append(prods, Prods{Id: uint64(x), Tipo: 0, Nombre: n, Precio: uint64(13500 + x*100), Calidad: 243, Filtros: Filtros, Evals: Evals})
 	}
 	Emp1 := Empresa{Id: 70001, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin1", Prods: prods}
 	Emp2 := Empresa{Id: 70002, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin2", Prods: prods}
@@ -708,13 +709,24 @@ func (h *MyHandler) SaveDb() {
 		buf = append(buf, h.EncodeBytes(*e)...)
 	}
 
-	for i := uint32(0); i < 10; i++ {
-		for j := uint32(0); j < 50; j++ {
+	var m1 uint32 = 1000
+	var m2 uint32 = 300
+
+	for i := uint32(0); i < m1; i++ {
+		for j := uint32(0); j < m2; j++ {
 			key := append(Int32tobytes(i), Int32tobytes(j)...)
 			h.Db.Set(key, buf)
 		}
 	}
-	fmt.Println("SAVE DB")
+
+	fmt.Printf("SAVE DB\n")
+	fmt.Printf("REGISTRO LEN(%v) - CANTPROD(%v) \n", len(buf), z*6)
+	fmt.Printf("CANT-DB CATS(%v) CUADS(%v)\n", m1, m2)
+	fmt.Printf("TOTAL REGISTRO(%v) PRODS(%v) BYTES(%.2fMB)\n", m1*m2, z*6*int(m1*m2), GetMB(int(m1*m2)*len(buf)))
+
+}
+func GetMB(x int) float64 {
+	return float64(x) / 1_048_576
 }
 func (h *MyHandler) EncodeBytes(emp Empresa) []byte {
 
