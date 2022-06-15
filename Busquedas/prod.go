@@ -236,6 +236,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 				}
 			} else {
 				fmt.Fprintf(ctx, "ErrorDecode")
+				fmt.Println(err)
 			}
 			//fmt.Println("time elapse:", time.Since(now))
 		default:
