@@ -172,6 +172,10 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 	if string(ctx.Method()) == "GET" {
 		switch string(ctx.Path()) {
 		case "/":
+
+			fmt.Println("Param C", ParamBytes(ctx.QueryArgs().Peek("c")))
+			fmt.Println("Param P", ctx.QueryArgs().Peek("p"))
+
 			now := time.Now()
 			var p Params
 			if err := json.Unmarshal(ctx.QueryArgs().Peek("p"), &p); err == nil {
