@@ -131,7 +131,7 @@ func main() {
 		Catalogo: make(map[uint32][]byte, 0),
 	}
 
-	pass.SaveDb()
+	//pass.SaveDb()
 
 	con := context.Background()
 	con, cancel := context.WithCancel(con)
@@ -175,7 +175,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 			//now := time.Now()
 			var p Params
 			if err := json.Unmarshal(ctx.QueryArgs().Peek("p"), &p); err == nil {
-				if len(p.O) == 4 {
+				if len(p.O) == 3 {
 					var key []byte
 					P := NewParams{D: p.D}
 					if SO := p.O[0] + p.O[1] + p.O[2]; SO > 0 {
@@ -204,6 +204,9 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					}
 					Res := Respuesta{Prods: make([]ResProd, 0, P.L), Emps: make([]ResEmp, 0, P.L), Count: 0}
 					cat := ParamBytes(ctx.QueryArgs().Peek("c"))
+
+					fmt.Println("CAT_CUAD", cat, p.C[0])
+
 					for _, cuad := range p.C {
 						key = append(cat, Int32tobytes(cuad)...)
 						val, _ := h.Db.Get(key)
@@ -234,6 +237,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 				}
 			} else {
 				fmt.Fprintf(ctx, "ErrorDecode")
+				fmt.Println(err)
 			}
 			//fmt.Println("time elapse:", time.Since(now))
 		default:
