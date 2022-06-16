@@ -687,7 +687,7 @@ func (h *MyHandler) SaveDb() {
 
 	prods := []Prods{}
 	var n string
-	var z int = 500
+	var z int = 100
 	for x := 1; x <= z; x++ {
 		n = fmt.Sprintf("Producto-%v", x)
 		prods = append(prods, Prods{Id: uint64(x), Tipo: 0, Nombre: n, Precio: uint64(13500 + x*100), Calidad: 243, Filtros: Filtros, Evals: Evals})
@@ -724,8 +724,8 @@ func (h *MyHandler) SaveDb() {
 		buf = append(buf, h.EncodeBytes(*e)...)
 	}
 
-	var m1 uint32 = 50
-	var m2 uint32 = 30
+	var m1 uint32 = 500
+	var m2 uint32 = 300
 
 	for i := uint32(0); i <= m1; i++ {
 		for j := uint32(0); j <= m2; j++ {
