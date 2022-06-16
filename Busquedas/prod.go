@@ -357,7 +357,6 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 							CantEval := Value[x]
 							if P.Elen > 0 {
 								Calidad = CompareEval(Value[x+1:x+1+int(CantEval)], P.E, P.SE)
-								//fmt.Println("Calidad:", Calidad)
 							}
 							x = x + 1 + int(CantEval)
 						}
@@ -382,12 +381,9 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 							}
 
 						} else {
-
 							if Nota > NotaMenor {
-
 								NotaMenor, Posicion, Id_Emp = GetNotaMenor(Res.Prods, Nota)
 								if Posicion > -1 {
-
 									var b bool = true
 									var vacio int = -1
 									for r, emp := range Res.Emps {
@@ -416,12 +412,9 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 											Res.Emps[vacio] = ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng}
 										}
 									}
-
 									Res.Prods[Posicion] = ResProd{Id: IdProd, Distancia: Distancia, Nombre: Nombre, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId}
-
 								}
 							}
-
 						}
 					} else {
 
@@ -694,30 +687,30 @@ func (h *MyHandler) SaveDb() {
 
 	prods := []Prods{}
 	var n string
-	var z int = 50
+	var z int = 5000
 	for x := 1; x <= z; x++ {
 		n = fmt.Sprintf("Producto-%v", x)
 		prods = append(prods, Prods{Id: uint64(x), Tipo: 0, Nombre: n, Precio: uint64(13500 + x*100), Calidad: 243, Filtros: Filtros, Evals: Evals})
 	}
+	/*
+		h.Empresas[70001] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[1] = h.GetBytesProds(prods)
 
-	h.Empresas[70001] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
-	h.Catalogo[1] = h.GetBytesProds(prods)
+		h.Empresas[70002] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[2] = h.GetBytesProds(prods)
 
-	h.Empresas[70002] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
-	h.Catalogo[2] = h.GetBytesProds(prods)
+		h.Empresas[70003] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[3] = h.GetBytesProds(prods)
 
-	h.Empresas[70003] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
-	h.Catalogo[3] = h.GetBytesProds(prods)
+		h.Empresas[70004] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[4] = h.GetBytesProds(prods)
 
-	h.Empresas[70004] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
-	h.Catalogo[4] = h.GetBytesProds(prods)
+		h.Empresas[70005] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[5] = h.GetBytesProds(prods)
 
-	h.Empresas[70005] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
-	h.Catalogo[5] = h.GetBytesProds(prods)
-
-	h.Empresas[70006] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
-	h.Catalogo[6] = h.GetBytesProds(prods)
-
+		h.Empresas[70006] = []byte{5, 65, 108, 108, 105, 110, 224, 59, 141, 194, 87, 194, 5, 194}
+		h.Catalogo[6] = h.GetBytesProds(prods)
+	*/
 	Emp1 := Empresa{Id: 70001, IdLoc: 0, IdCat: 1, Lat: -33.234, Lng: 180.01, Nombre: "Allin1", Prods: prods}
 	Emp2 := Empresa{Id: 70002, IdLoc: 0, IdCat: 2, Lat: -33.234, Lng: 180.01, Nombre: "Allin2", Prods: prods}
 	Emp3 := Empresa{Id: 70003, IdLoc: 0, IdCat: 3, Lat: -33.234, Lng: 180.01, Nombre: "Allin3", Prods: prods}
