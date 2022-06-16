@@ -212,21 +212,21 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 						}
 					}
 					var b strings.Builder
-					b.Grow(900)
+					b.Grow(1000)
+					b.Write([]byte{123, 39, 80, 39, 58, 91})
 					for m, p := range Res.Prods {
 						if m == 0 {
-							b.Write([]byte{123, 39, 80, 39, 58, 91})
 							fmt.Fprintf(&b, "{'Id':%d,'Nombre':'%s','Precio':%v,'Nota':%v}", p.Id, p.Nombre, p.Precio, p.Nota)
 						} else {
 							fmt.Fprintf(&b, ",{'Id':%d,'Nombre':'%s','Precio':%v,'Nota':%v}", p.Id, p.Nombre, p.Precio, p.Nota)
 						}
 					}
+					b.Write([]byte{93, 44, 39, 69, 39, 58, 91})
 					for n, e := range Res.Emps {
 						if n == 0 {
-							b.Write([]byte{93, 44, 39, 69, 39, 58, 91})
 							fmt.Fprintf(&b, "{'Id':%d,'Nombre':'%s'}", n, e.Nombre)
 						} else {
-							fmt.Fprintf(&b, "{'Id':%d,'Nombre':'%s'}", n, e.Nombre)
+							fmt.Fprintf(&b, ",{'Id':%d,'Nombre':'%s'}", n, e.Nombre)
 						}
 					}
 					b.Write([]byte{93, 125})
