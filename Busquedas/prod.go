@@ -207,9 +207,9 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					for _, cuad := range p.C {
 						key = append(cat, Int32tobytes(cuad)...)
 						val, err := h.Db.Get(key)
-						if err == nil {
-							h.DecodeBytes(&Res, val, P)
-						}
+						fmt.Println("ERR", err)
+						h.DecodeBytes(&Res, val, P)
+
 					}
 					var b strings.Builder
 					b.Grow(900)
