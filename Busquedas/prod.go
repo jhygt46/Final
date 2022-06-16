@@ -734,8 +734,8 @@ func (h *MyHandler) SaveDb() {
 	var m1 uint32 = 50
 	var m2 uint32 = 30
 
-	for i := uint32(0); i < m1; i++ {
-		for j := uint32(0); j < m2; j++ {
+	for i := uint32(0); i <= m1; i++ {
+		for j := uint32(0); j <= m2; j++ {
 			key := append(Int32tobytes(i), Int32tobytes(j)...)
 			h.Db.Set(key, buf)
 		}
