@@ -206,8 +206,10 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					cat := ParamBytes(ctx.QueryArgs().Peek("c"))
 					for _, cuad := range p.C {
 						key = append(cat, Int32tobytes(cuad)...)
-						val, _ := h.Db.Get(key)
-						h.DecodeBytes(&Res, val, P)
+						val, err := h.Db.Get(key)
+						if err == nil {
+							h.DecodeBytes(&Res, val, P)
+						}
 					}
 					var b strings.Builder
 					b.Grow(900)
@@ -744,7 +746,6 @@ func (h *MyHandler) SaveDb() {
 	fmt.Printf("CANT-DB CATS(%v) CUADS(%v)\n", m1, m2)
 	fmt.Printf("TOTAL REGISTRO(%v) PRODS(%v) BYTES(%.2fMB)\n", m1*m2, z*6*int(m1*m2), GetMB(int(m1*m2)*len(buf)))
 	fmt.Println("BYTES", int(m1*m2)*len(buf))
-
 }
 func GetMB(x int) float64 {
 	return float64(x) / 1_048_576
