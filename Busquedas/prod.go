@@ -724,7 +724,7 @@ func (h *MyHandler) SaveDb() {
 		buf = append(buf, h.EncodeBytes(*e)...)
 	}
 
-	var m1 uint32 = 500
+	var m1 uint32 = 50
 	var m2 uint32 = 300
 
 	for i := uint32(0); i <= m1; i++ {
