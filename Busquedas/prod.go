@@ -26,9 +26,10 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type Respuesta struct {
-	Prods []ResProd `json:"Prods"`
-	Emps  []ResEmp  `json:"Emps"`
-	Count int       `json:"Count"`
+	Prods     []ResProd `json:"Prods"`
+	Emps      []ResEmp  `json:"Emps"`
+	Count     int       `json:"Count"`
+	NotaMenor float64   `json:"NotaMenor"`
 }
 type ResProd struct {
 	Id        uint32  `json:"Id"`
@@ -91,7 +92,7 @@ type Params struct {
 	C []uint32   `json:"C"` // CUADRANTES
 	F [][]uint32 `json:"F"` // FILTROS
 	E []uint8    `json:"E"` // EVALS
-	D uint16     `json:"D"` // DESDE
+	D float64    `json:"D"` // DESDE
 	N uint8      `json:"N"` // NUMERO DE FILTROS
 	L int        `json:"L"` // LARGO
 	O []float64  `json:"O"` // OPCIONES 1 PRECIO - 2 DISTANCIA - 3 CALIDAD
@@ -99,7 +100,7 @@ type Params struct {
 type NewParams struct {
 	F    [][]uint32 `json:"F"`    // FILTROS
 	E    []uint8    `json:"E"`    // EVALS
-	D    uint16     `json:"D"`    // DESDE
+	D    float64    `json:"D"`    // DESDE
 	O    []float64  `json:"O"`    // OPCIONES 1 PRECIO - 2 DISTANCIA - 3 CALIDAD
 	L    int        `json:"L"`    // LARGO
 	SO   float64    `json:"SO"`   // SUMAOPCIONES
@@ -131,7 +132,7 @@ func main() {
 		Catalogo: make(map[uint32][]byte, 0),
 	}
 
-	pass.SaveDb()
+	//pass.SaveDb()
 
 	con := context.Background()
 	con, cancel := context.WithCancel(con)
@@ -177,7 +178,10 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 			if err := json.Unmarshal(ctx.QueryArgs().Peek("p"), &p); err == nil {
 				if len(p.O) == 3 {
 					var key []byte
-					P := NewParams{D: p.D}
+					P := NewParams{}
+					if p.D == 0 {
+						P.D = 999999999
+					}
 					if SO := p.O[0] + p.O[1] + p.O[2]; SO > 0 {
 						P.O = p.O
 						P.SO = SO
@@ -202,7 +206,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					if p.L < 19 || p.L > 51 {
 						P.L = 20
 					}
-					Res := Respuesta{Prods: make([]ResProd, 0, P.L), Emps: make([]ResEmp, 0, P.L), Count: 0}
+					Res := Respuesta{Prods: make([]ResProd, 0, P.L), Emps: make([]ResEmp, 0, P.L), Count: 0, NotaMenor: 999999}
 					cat := ParamBytes(ctx.QueryArgs().Peek("c"))
 					for _, cuad := range p.C {
 						key = append(cat, Int32tobytes(cuad)...)
@@ -224,12 +228,14 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					b.Write([]byte{93, 44, 39, 69, 39, 58, 91})
 					for n, e := range Res.Emps {
 						if n == 0 {
-							fmt.Fprintf(&b, "{'Id':%d,'Nombre':'%s'}", n, e.Nombre)
+							fmt.Fprintf(&b, "{'Id':%d,'Nombre':'%s'}", e.Id, e.Nombre)
 						} else {
-							fmt.Fprintf(&b, ",{'Id':%d,'Nombre':'%s'}", n, e.Nombre)
+							fmt.Fprintf(&b, ",{'Id':%d,'Nombre':'%s'}", e.Id, e.Nombre)
 						}
 					}
-					b.Write([]byte{93, 125})
+					b.Write([]byte{93, 44, 39, 68, 39, 58})
+					fmt.Fprintf(&b, "%v", Res.NotaMenor)
+					b.Write([]byte{125})
 					fmt.Fprint(ctx, b.String())
 				} else {
 					fmt.Fprintf(ctx, "ErrorHTTP")
@@ -243,27 +249,77 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 		}
 	}
 }
+
+func (r *Respuesta) Respuesta1(p ResProd, e ResEmp) {
+	var b bool = true
+	r.Prods = append(r.Prods, p)
+	for q, emp := range r.Emps {
+		if emp.Id == e.Id {
+			b = false
+			r.Emps[q].Count = r.Emps[q].Count + 1
+		}
+	}
+	if b {
+		r.Emps = append(r.Emps, e)
+	}
+}
+func (r *Respuesta) Respuesta2(p ResProd, e ResEmp) {
+
+	var Posicion int = -1
+	var IdEmp uint32 = 0
+	var NotaMenor float64 = 9999999
+
+	for q, pro := range r.Prods {
+		if pro.Nota < NotaMenor {
+			NotaMenor = pro.Nota
+			Posicion = q
+			IdEmp = pro.IdEmp
+		}
+	}
+
+	r.NotaMenor = NotaMenor
+
+	if p.Nota > NotaMenor {
+		r.Prods[Posicion] = p
+		if p.IdEmp != IdEmp {
+			var empinsert = true
+			for m, emp := range r.Emps {
+				if emp.Id == IdEmp {
+					// RESTAR COUNT EMPRESA
+					if emp.Count == 1 {
+						RemoveEmps(r.Emps, m)
+					}
+					if emp.Count > 1 {
+						r.Emps[m].Count = r.Emps[m].Count - 1
+					}
+				}
+				if emp.Id == p.IdEmp {
+					// SUMAR COUNT EMPRESA
+					empinsert = false
+					r.Emps[m].Count = r.Emps[m].Count + 1
+				}
+			}
+			if empinsert {
+				r.Emps = append(r.Emps, e)
+			}
+		}
+	}
+}
+
 func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 
 	var length int = len(bytes)
-	var IdEmp uint32
-	var IdProd uint32
-	var Precio uint32
-	var Calidad uint32
-	var NombreEmp string
-	var NElen int
-	var Size uint32
-	var Lat float32
-	var Lng float32
-	var Value []byte
-	var j int = 0
-	var x int = 0
+	var IdEmp, IdProd, Precio, Calidad, Size, IdLoc, IdCat uint32
+	var foundEmp, foundCat, foundProd bool
+	var NombreEmp, Nombre string
+	var NElen, Pos, nlen, CantFiltro, t, CantProd, w, s int
+	var Lat, Lng float32
+	var Value, Emp, Cat, prod []byte
+	var cantarr, i, CantEval, CantString, ProF, ProE, CantPrecio, CantId, Eval, Filtro, TipoId, EmpCache, CatalogoCache, EmpSize, Loc, ByteSize uint8
+
+	var j, x int = 0, 0
 	var Distancia uint32 = 0
-	var Nota float64 = 0
-	var NotaMenor float64 = 999999
-	var Posicion int = 0
-	var Id_Emp uint32 = 0
-	var CountFiltro float64 = 0
+	var Nota, CountFiltro float64 = 0, 0
 
 	var x1 float64 = 1800
 	var y1 float64 = 5000
@@ -272,26 +328,26 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 	for {
 
 		Size = 0
-		EmpCache, CatalogoCache, EmpSize, Loc, ByteSize := DecEmp(bytes[j])
+		EmpCache, CatalogoCache, EmpSize, Loc, ByteSize = DecEmp(bytes[j])
 		IdEmp = GetIntBytesU32(bytes[j+1 : j+3+int(EmpSize)])
 		j = j + int(EmpSize) + 3
 
 		if EmpCache == 1 {
-			if Emp, foundEmp := h.Empresas[IdEmp]; foundEmp {
+			if Emp, foundEmp = h.Empresas[IdEmp]; foundEmp {
 
 				NElen = int(Emp[0]) + 1
 				NombreEmp = string(Emp[1:NElen])
-				IdLoc := GetIntBytesU32(bytes[j : j+int(Loc)+1])
-				Pos := NElen + int(IdLoc)*8
+				IdLoc = GetIntBytesU32(bytes[j : j+int(Loc)+1])
+				Pos = NElen + int(IdLoc)*8
 				Lat = Float32frombytes(Emp[Pos : Pos+4])
 				Lng = Float32frombytes(Emp[Pos+4 : Pos+8])
 
 				j = j + int(Loc) + 1
 
 				if CatalogoCache == 1 {
-					IdCat := GetIntBytesU32(bytes[j : j+int(ByteSize)+1])
+					IdCat = GetIntBytesU32(bytes[j : j+int(ByteSize)+1])
 					j = j + int(ByteSize) + 1
-					if Cat, foundCat := h.Catalogo[IdCat]; foundCat {
+					if Cat, foundCat = h.Catalogo[IdCat]; foundCat {
 						Value = Cat
 					}
 				} else {
@@ -316,15 +372,15 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 		if Distancia = Distance(-33.44546, 70.44546, Lat, Lng); Distancia > 0 {
 
 			x = 0
-			cantarr := Value[x]
+			cantarr = Value[x]
 			x++
-			for i := uint8(0); i < cantarr; i++ {
+			for i = 0; i < cantarr; i++ {
 
-				_, CantPrecio, CantId, Eval, Filtro, TipoId := DecProd(Value[x])
-				CantProd, w := DecodeSpecialBytes(Value[x+1:x+3], 200)
+				_, CantPrecio, CantId, Eval, Filtro, TipoId = DecProd(Value[x])
+				CantProd, w = DecodeSpecialBytes(Value[x+1:x+3], 200)
 				x = x + w + 1
 
-				for s := 0; s < CantProd; s++ {
+				for s = 0; s < CantProd; s++ {
 
 					Res.Count++
 
@@ -336,14 +392,14 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 
 					if TipoId == 1 {
 
-						nlen := int(Value[x])
-						Nombre := string(Value[x+1 : x+1+nlen])
+						nlen = int(Value[x])
+						Nombre = string(Value[x+1 : x+1+nlen])
 						x = x + 1 + nlen
 						Calidad = uint32(Value[x])
 
 						x++
 						if Filtro == 1 {
-							CantFiltro, t := DecodeSpecialBytes(Value[x:x+2], 200)
+							CantFiltro, t = DecodeSpecialBytes(Value[x:x+2], 200)
 							if CantFiltro > 0 {
 								if P.Flen > 0 {
 									CountFiltro = CompareFiltro(Value[x+t:x+t+int(CantFiltro)], P.F)
@@ -354,7 +410,7 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 							}
 						}
 						if Eval == 1 {
-							CantEval := Value[x]
+							CantEval = Value[x]
 							if P.Elen > 0 {
 								Calidad = CompareEval(Value[x+1:x+1+int(CantEval)], P.E, P.SE)
 							}
@@ -363,100 +419,70 @@ func (h *MyHandler) DecodeBytes(Res *Respuesta, bytes []byte, P NewParams) {
 
 						Nota = (m*(float64(Precio)-x1)+y1)*(P.O[0]/P.SO) + (m*(float64(Distancia)-x1)+y1)*(P.O[1]/P.SO) + (m*(float64(Calidad)-x1)+y1)*(P.O[2]/P.SO) + CountFiltro*1000
 
-						if len(Res.Prods) < P.L {
-
-							Res.Prods = append(Res.Prods, ResProd{Id: IdProd, Distancia: Distancia, Nombre: Nombre, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId})
-							var b bool = true
-							for q, emp := range Res.Emps {
-								if emp.Id == IdEmp {
-									b = false
-									Res.Emps[q].Count = emp.Count + 1
+						if Nota < P.D {
+							if len(Res.Prods) < P.L {
+								Res.Respuesta1(ResProd{Id: IdProd, Distancia: Distancia, Nombre: Nombre, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId}, ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng})
+								if Res.NotaMenor > Nota {
+									Res.NotaMenor = Nota
 								}
-							}
-							if b {
-								Res.Emps = append(Res.Emps, ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng})
-							}
-							if NotaMenor > Nota {
-								NotaMenor = Nota
-							}
-
-						} else {
-							if Nota > NotaMenor {
-								NotaMenor, Posicion, Id_Emp = GetNotaMenor(Res.Prods, Nota)
-								if Posicion > -1 {
-									var b bool = true
-									var vacio int = -1
-									for r, emp := range Res.Emps {
-										if emp.Id == Id_Emp {
-											if emp.Count == 1 {
-												Res.Emps[r].Id = 0
-												Res.Emps[r].Count = 0
-												vacio = r
-											}
-											if emp.Count > 1 {
-												Res.Emps[r].Count = emp.Count - 1
-											}
-										}
-										if emp.Id == IdEmp {
-											b = false
-											Res.Emps[r].Count = emp.Count + 1
-										}
-										if emp.Id == 0 {
-											vacio = r
-										}
-									}
-									if b {
-										if vacio == -1 {
-											Res.Emps = append(Res.Emps, ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng})
-										} else {
-											Res.Emps[vacio] = ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng}
-										}
-									}
-									Res.Prods[Posicion] = ResProd{Id: IdProd, Distancia: Distancia, Nombre: Nombre, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId}
+							} else {
+								if Nota > Res.NotaMenor {
+									Res.Respuesta2(ResProd{Id: IdProd, Distancia: Distancia, Nombre: Nombre, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId}, ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng})
 								}
 							}
 						}
 					} else {
 
-						if prod, found := h.Prods[IdProd]; found {
+						if prod, foundProd = h.Prods[IdProd]; foundProd {
 
-							CantString, ProF, ProE := DecProMem(prod[0])
+							CantString, ProF, ProE = DecProMem(prod[0])
 
-							nlen := int(CantString)
-							NombreP := string(prod[1 : 1+nlen])
+							nlen = int(CantString)
+							Nombre = string(prod[1 : 1+nlen])
 							Calidad = uint32(prod[1+nlen])
 							d := 2 + nlen
 
-							Silence(NombreP, d)
-
-							Nota = (m*(float64(Precio)-x1)+y1)*(P.O[0]/P.SO) + (m*(float64(Distancia)-x1)+y1)*(P.O[1]/P.SO) + (m*(float64(Calidad)-x1)+y1)*(P.O[2]/P.SO)
-
-							if len(Res.Prods) < P.L {
-								Res.Prods = append(Res.Prods, ResProd{Id: IdProd, Distancia: Distancia, Nombre: NombreP, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId})
-							} else {
-
-							}
-
 							if ProF == 1 {
-								//fmt.Println("CACHE FILTRO")
+								CantFiltro, t = DecodeSpecialBytes(prod[d:d+2], 200)
+								if CantFiltro > 0 {
+									if P.Flen > 0 {
+										CountFiltro = CompareFiltro(prod[d+t:d+t+int(CantFiltro)], P.F)
+									}
+									d = d + t + int(CantFiltro)
+								} else {
+									d = d + 1
+								}
 							}
 							if ProE == 1 {
-								//fmt.Println("CACHE EVALS")
+								CantEval = prod[d]
+								if P.Elen > 0 {
+									Calidad = CompareEval(Value[d+1:d+1+int(CantEval)], P.E, P.SE)
+								}
+								d = d + 1 + int(CantEval)
 							}
 
-							//fmt.Println(prod, Filtro, Eval)
-							//fmt.Printf("SICACHE IdProd %v - Precio %v - Nombre %s - Calidad %v\n", IdProd, Precio, Nombre, Calidad)
+							Nota = (m*(float64(Precio)-x1)+y1)*(P.O[0]/P.SO) + (m*(float64(Distancia)-x1)+y1)*(P.O[1]/P.SO) + (m*(float64(Calidad)-x1)+y1)*(P.O[2]/P.SO) + CountFiltro*1000
+
+							if Nota < P.D {
+								if len(Res.Prods) < P.L {
+									Res.Respuesta1(ResProd{Id: IdProd, Distancia: Distancia, Nombre: Nombre, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId}, ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng})
+									if Res.NotaMenor > Nota {
+										Res.NotaMenor = Nota
+									}
+								} else {
+									if Nota > Res.NotaMenor {
+										Res.Respuesta2(ResProd{Id: IdProd, Distancia: Distancia, Nombre: Nombre, Precio: Precio, Calidad: Calidad, Nota: Nota, IdEmp: IdEmp, TipoId: TipoId}, ResEmp{Id: IdEmp, Nombre: NombreEmp, Count: 1, Lat: Lat, Lng: Lng})
+									}
+								}
+							}
 						} else {
-							//fmt.Println("ERROR PROD NOT FOUND", IdProd)
+							fmt.Println("ERROR PROD NOT FOUND", IdProd)
 						}
 					}
 				}
 			}
-
-			j = j + int(Size)
-		} else {
-			j = j + int(Size)
 		}
+		j = j + int(Size)
 
 		if length <= j {
 			break
@@ -605,19 +631,6 @@ func CompareEval(v []byte, p []uint8, suma uint32) uint32 {
 	}
 	return sum * 100 / suma
 }
-func GetNotaMenor(Prods []ResProd, Nota float64) (float64, int, uint32) {
-
-	var Posicion int = -1
-	var PosEmp uint32 = 0
-	for i, v := range Prods {
-		if v.Nota < Nota {
-			Nota = v.Nota
-			Posicion = i
-			PosEmp = v.IdEmp
-		}
-	}
-	return Nota, Posicion, PosEmp
-}
 func DecProMem(b uint8) (CantString uint8, ProF uint8, ProE uint8) {
 
 	CantString = b / 4
@@ -636,7 +649,6 @@ func DecFiltro(b uint8) (Num uint8, CantBytes uint8, Tipo uint8) {
 	Tipo = aux2 % 2
 	return
 }
-func Silence(s string, i int) {}
 
 // DAEMON //
 func (h *MyHandler) StartDaemon() {
@@ -739,9 +751,6 @@ func (h *MyHandler) SaveDb() {
 	fmt.Printf("CANT-DB CATS(%v) CUADS(%v)\n", m1, m2)
 	fmt.Printf("TOTAL REGISTRO(%v) PRODS(%v) BYTES(%.2fMB)\n", m1*m2, z*6*int(m1*m2), GetMB(int(m1*m2)*len(buf)))
 	fmt.Println("BYTES", int(m1*m2)*len(buf))
-}
-func GetMB(x int) float64 {
-	return float64(x) / 1_048_576
 }
 func (h *MyHandler) EncodeBytes(emp Empresa) []byte {
 
@@ -1036,6 +1045,12 @@ func CreateProdMemoryBytes(Prod Prods) []byte {
 		buf = AddBytes(buf, BytesEvals(Prod.Evals))
 	}
 	return buf
+}
+func RemoveEmps(s []ResEmp, index int) []ResEmp {
+	return append(s[:index], s[index+1:]...)
+}
+func GetMB(x int) float64 {
+	return float64(x) / 1_048_576
 }
 
 // ENCODE BYTES //

@@ -66,11 +66,12 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					var num uint32
 					var bytes uint32
 					var posbyte uint32
+					var arrcuad uint32
 
 					b.Grow(50)
 					b.Write([]byte{91})
 
-					for _, arrcuad := range p.C {
+					for _, arrcuad = range p.C {
 
 						num = arrcuad - 1
 						bytes = num / 8
