@@ -244,18 +244,21 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
 				var bn []int32
 				var key []byte
-				var Search []int32
+				var b strings.Builder
+				b.Write([]byte{91})
 
 				bn = p[0:2]
-				Search = p[2:len(p)]
-
-				key = GetKey(bn)
+				key = GetKey2(bn, ParamBytes(ctx.QueryArgs().Peek("u")))
 				val, _ := h.Db.Get(key)
 				if len(val) > 0 {
-					fmt.Println("BUSQUEDA POR CUAD", Search)
+					var Search []int32 = p[2:len(p)]
+					WriteResponse(&val, 0, &b, Search)
 				} else {
 					fmt.Println("NOT FOUND DB-CUAD KEY", key)
 				}
+
+				b.Write([]byte{93})
+				fmt.Fprint(ctx, b.String())
 
 			}
 
@@ -271,42 +274,43 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 				var bn []int32
 				var key []byte
 				var Search []int32
-				var j int
-				var i uint8
-				var Count int = 0
+				//var j int
+				//var i uint8
 
 				var b strings.Builder
 				b.Write([]byte{91})
 				for {
 
-					j = 1
+					//j = 1
 					bn = p[0 : len(p)-leng]
 					Search = p[len(p)-leng : len(p)]
 
 					if Auto, foundAuto = h.AutoComplete[string(bn)]; foundAuto {
 
-						fmt.Println("AutoComplete str", string(bn))
-						for i = 0; i < Auto[0]; i++ {
-							InfoAuto, w := DecodeSpecialBytes(Auto[j:j+2], 200)
-							j = j + w
-							CantPal, CantId, Tipo := DecPal(InfoAuto)
-							for m := 0; m < CantPal; m++ {
-								IdPal := GetIntBytesU32(Auto[j : j+int(CantId)+2])
-								j = j + int(CantId) + 2
-								CantNombre := Auto[j]
-								Nombre := Auto[j+1 : j+int(CantNombre)+1]
-								j = j + int(CantNombre) + 1
-								if leng == 0 {
-									if Count > 0 {
-										b.Write([]byte{44})
+						WriteResponse(&Auto, leng, &b, Search)
+						/*
+							fmt.Println("AutoComplete str", string(bn))
+							for i = 0; i < Auto[0]; i++ {
+								InfoAuto, w := DecodeSpecialBytes(Auto[j:j+2], 200)
+								j = j + w
+								CantPal, CantId, Tipo := DecPal(InfoAuto)
+								for m := 0; m < CantPal; m++ {
+									IdPal := GetIntBytesU32(Auto[j : j+int(CantId)+2])
+									j = j + int(CantId) + 2
+									CantNombre := Auto[j]
+									Nombre := Auto[j+1 : j+int(CantNombre)+1]
+									j = j + int(CantNombre) + 1
+									if leng == 0 {
+										if b.Len() > 1 {
+											b.Write([]byte{44})
+										}
+										fmt.Fprintf(&b, "{'I':%v,'N':%v,'T':%v}", IdPal, string(Nombre), Tipo)
+									} else {
+										fmt.Println("BUSCAR MEMORY IdPal:", IdPal, "Nombre:", Nombre, "Tipo", Tipo, "SEARCH:", Search)
 									}
-									fmt.Fprintf(&b, "{'I':%v,'N':%v,'T':%v}", IdPal, string(Nombre), Tipo)
-									Count++
-								} else {
-									fmt.Println("BUSCAR MEMORY IdPal:", IdPal, "Nombre:", Nombre, "Tipo", Tipo, "SEARCH:", Search)
 								}
 							}
-						}
+						*/
 
 					} else {
 
@@ -314,28 +318,29 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 						val, _ := h.Db.Get(key)
 						if len(val) > 0 {
 
-							for i = 0; i < val[0]; i++ {
-								InfoAuto, w := DecodeSpecialBytes(val[j:j+2], 200)
-								j = j + w
-								CantPal, CantId, Tipo := DecPal(InfoAuto)
-								for m := 0; m < CantPal; m++ {
-									IdPal := GetIntBytesU32(val[j : j+int(CantId)+2])
-									j = j + int(CantId) + 2
-									CantNombre := val[j]
-									Nombre := val[j+1 : j+int(CantNombre)+1]
-									j = j + int(CantNombre) + 1
-									if leng == 0 {
-										if Count > 0 {
-											b.Write([]byte{44})
+							WriteResponse(&val, leng, &b, Search)
+							/*
+								for i = 0; i < val[0]; i++ {
+									InfoAuto, w := DecodeSpecialBytes(val[j:j+2], 200)
+									j = j + w
+									CantPal, CantId, Tipo := DecPal(InfoAuto)
+									for m := 0; m < CantPal; m++ {
+										IdPal := GetIntBytesU32(val[j : j+int(CantId)+2])
+										j = j + int(CantId) + 2
+										CantNombre := val[j]
+										Nombre := val[j+1 : j+int(CantNombre)+1]
+										j = j + int(CantNombre) + 1
+										if leng == 0 {
+											if b.Len() > 1 {
+												b.Write([]byte{44})
+											}
+											fmt.Fprintf(&b, "{'I':%v,'N':%v,'T':%v}", IdPal, string(Nombre), Tipo)
+										} else {
+											fmt.Println("BUSCAR DATABASE IdPal:", IdPal, "Nombre:", Nombre, "Tipo", Tipo, "SEARCH:", Search)
 										}
-										fmt.Fprintf(&b, "{'I':%v,'N':%v,'T':%v}", IdPal, string(Nombre), Tipo)
-										Count++
-									} else {
-										fmt.Println("BUSCAR DATABASE IdPal:", IdPal, "Nombre:", Nombre, "Tipo", Tipo, "SEARCH:", Search)
 									}
 								}
-							}
-
+							*/
 						} else {
 							fmt.Println("DATABASE OUT")
 						}
@@ -358,8 +363,42 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 		}
 	}
 }
-func WriteResponse([]byte) {
+func WriteResponse(Auto *[]byte, leng int, b *strings.Builder, Search []int32) {
 
+	var i uint8
+	var j int = 1
+	var Count int = 0
+	for i = 0; i < (*Auto)[0]; i++ {
+		InfoAuto, w := DecodeSpecialBytes((*Auto)[j:j+2], 200)
+		j = j + w
+		CantPal, CantId, Tipo := DecPal(InfoAuto)
+		for m := 0; m < CantPal; m++ {
+			IdPal := GetIntBytesU32((*Auto)[j : j+int(CantId)+2])
+			j = j + int(CantId) + 2
+			CantNombre := (*Auto)[j]
+			Nombre := (*Auto)[j+1 : j+int(CantNombre)+1]
+			j = j + int(CantNombre) + 1
+			if leng == 0 {
+				if (*b).Len() > 1 {
+					(*b).Write([]byte{44})
+				}
+				fmt.Fprintf(b, "{'I':%v,'N':%v,'T':%v}", IdPal, string(Nombre), Tipo)
+				Count++
+			} else {
+				fmt.Println("BUSCAR MEMORY IdPal:", IdPal, "Nombre:", Nombre, "Tipo", Tipo, "SEARCH:", Search)
+			}
+		}
+	}
+
+}
+func ParamBytes(data []byte) []byte {
+	var x uint32
+	for _, c := range data {
+		x = x*10 + uint32(c-'0')
+	}
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, x)
+	return Reverse(b)
 }
 func GetIntBytesU32(val []uint8) uint32 {
 	switch len(val) {
@@ -438,6 +477,33 @@ func GetKey(i []int32) []byte {
 			break
 		}
 	}
+	return buf
+}
+func GetKey2(i []int32, cuad []byte) []byte {
+	var buf []byte = make([]byte, 0)
+	var leng, x int = len(i), 0
+	for {
+
+		if i[x] < 256 {
+			buf = append(buf, uint8(i[x]))
+		}
+		if i[x] < 65536 {
+			b := make([]byte, 2)
+			binary.LittleEndian.PutUint16(b, uint16(i[x]))
+			buf = append(buf, Reverse(b)...)
+		}
+		if i[x] < 16777216 {
+			b := make([]byte, 4)
+			binary.LittleEndian.PutUint32(b, uint32(i[x]))
+			buf = append(buf, Reverse(b[0:3])...)
+		}
+		x++
+		if leng == x {
+			break
+		}
+	}
+	buf = append(buf, uint8(0))
+	buf = append(buf, cuad...)
 	return buf
 }
 func Inttobytes(i int32) []byte {
