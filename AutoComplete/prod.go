@@ -264,7 +264,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
 		case "/auto":
 
-			now := time.Now()
+			//now := time.Now()
 			var p []int32
 			if err := json.Unmarshal(ctx.QueryArgs().Peek("c"), &p); err == nil {
 
@@ -342,7 +342,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 								}
 							*/
 						} else {
-							fmt.Println("DATABASE OUT")
+							fmt.Println("DATABASE OUT", bn)
 						}
 					}
 					if leng == 0 {
@@ -356,7 +356,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 				fmt.Println("Err JSONDECODE", err)
 				fmt.Fprint(ctx, "Err JSONDECODE")
 			}
-			fmt.Println("time elapse:", time.Since(now))
+			//fmt.Println("time elapse:", time.Since(now))
 
 		default:
 			ctx.Error("Not Found", fasthttp.StatusNotFound)
