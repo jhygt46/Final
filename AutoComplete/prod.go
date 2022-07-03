@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"os"
 	"os/signal"
 	"runtime"
@@ -17,20 +18,47 @@ import (
 	lediscfg "github.com/ledisdb/ledisdb/config"
 	"github.com/ledisdb/ledisdb/ledis"
 	"github.com/valyala/fasthttp"
+
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type MyHandler struct {
 	Db           *ledis.DB         `json:"Db"`
 	Conf         Config            `json:"Conf"`
-	AutoComplete map[string]string `json:"Productos"`
+	AutoComplete map[string][]byte `json:"Productos"`
 	Letters      []int32           `json:"Letters"`
 }
 type Config struct {
 	Tiempo time.Duration `json:"Tiempo"`
 }
+type Palabras struct {
+	Id     uint32 `json:"Id"`
+	Tipo   uint32 `json:"Tipo"`
+	Nombre string `json:"Nombre"`
+}
 
 func main() {
 
+	/*
+		lista := make([][]int32, 4)
+		lista[0] = make([]int32, 2)
+		lista[1] = make([]int32, 2)
+		lista[2] = make([]int32, 2)
+		lista[3] = make([]int32, 2)
+
+		var i, total int32 = 0, 1114111
+		for i = 0; i <= total; i++ {
+			x := len([]byte(string(i))) - 1
+			if lista[x][0] == 0 {
+				lista[x][0] = i
+			}
+			lista[x][1] = i
+		}
+		fmt.Println(lista)
+		fmt.Println(EncodeAuto())
+	*/
 	cfg := lediscfg.NewConfigDefault()
 
 	var port string
@@ -47,7 +75,7 @@ func main() {
 
 	pass := &MyHandler{
 		Db:           db,
-		AutoComplete: make(map[string]string, 0),
+		AutoComplete: make(map[string][]byte, 0),
 		Letters:      make([]int32, 0, 10),
 	}
 
@@ -86,23 +114,121 @@ func main() {
 		os.Exit(1)
 	}
 }
+func EncodeAuto() []byte {
 
+	resAuto := make(map[int][]Palabras, 256)
+	buf := []byte{}
+
+	var num int = 0
+	var CountId int = 0
+
+	ListaPalabra := []Palabras{Palabras{Id: 1345, Tipo: 1, Nombre: "CDE"}, Palabras{Id: 1346, Tipo: 1, Nombre: "CDF"}}
+
+	for _, palabra := range ListaPalabra {
+
+		if palabra.Tipo == 1 {
+			num = 0 // CATEGORIA
+		}
+		if palabra.Tipo == 2 {
+			num = 1 // PRODUCTO
+		}
+		if palabra.Tipo == 3 {
+			num = 2 // EMPRESA
+		}
+		if palabra.Tipo == 4 {
+			num = 3 // LUGAR
+		}
+		CountId = GetCountBytesInt32(palabra.Id) - 2
+		if CountId == -1 {
+			CountId = 0
+		}
+		num = num + CountId*4
+		resAuto[num] = append(resAuto[num], palabra)
+	}
+
+	buf = AddBytes(buf, IntToBytes(len(resAuto)))
+
+	for v, lpal := range resAuto {
+
+		LenPal, EncodeErr := EncodeSpecialBytes(v+len(lpal)*12, 200)
+		if EncodeErr {
+			buf = AddBytes(buf, LenPal)
+		}
+		for _, lpalr := range lpal {
+			buf = AddBytes(buf, Min2Bytes(IntToBytes(int(lpalr.Id))))
+			nombrebytes := []byte(lpalr.Nombre)
+			buf = AddBytes(buf, IntToBytes(len(nombrebytes)))
+			buf = AddBytes(buf, nombrebytes)
+		}
+	}
+	return buf
+}
+func Min2Bytes(bytes []byte) []byte {
+	if len(bytes) == 1 {
+		b := []byte{0}
+		b = append(b, bytes...)
+		return b
+	}
+	return bytes
+}
+func EncodeSpecialBytes(num int, limit int) ([]byte, bool) {
+	max := (255-limit)*256 + 255
+	if num <= max {
+		if num < limit {
+			return []byte{uint8(num)}, true
+		} else {
+			x := num - limit
+			b1 := x/256 + limit
+			b2 := x % 256
+			return []byte{uint8(b1), uint8(b2)}, true
+		}
+	} else {
+		return nil, false
+	}
+}
+func DecodeSpecialBytes(byte []byte, limit int) (int, int) {
+	m := int(byte[0])
+	if m < limit {
+		return m, 1
+	} else {
+		return (m-limit)*256 + int(byte[1]) + 200, 2
+	}
+}
+func DecPal(b int) (CantPal int, CantId int, Tipo int) {
+
+	CantPal = b / 12
+	aux0 := b % 12
+	CantId = aux0 / 4
+	aux1 := aux0 % 4
+	Tipo = aux1 % 4
+	return
+}
 func (h *MyHandler) SaveDb() {
 
-	var data string = "HOLA MUNDO"
-	h.AutoComplete["世界"] = data
+	lista := make([]int32, 0, 100)
 
-	h.Letters = []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	for i := 140910; i < 141010; i++ {
+		lista = append(lista, int32(i))
+	}
 
-	/*
-		var i, j uint32 = 0, 0
-		for i = 1; i <= 100000; i++ {
-			//h.AutoComplete[string(i)] = data
+	for _, j := range lista {
+		for _, k := range lista {
+			var b strings.Builder
+			fmt.Fprintf(&b, "%c%c", j, k)
+			h.AutoComplete[b.String()] = EncodeAuto()
 		}
-		var m2 uint32 = 200000
-		var buf []byte = []byte(data)
-		for j = 100001; j <= m2; j++ {
-			h.Db.Set(Int32tobytes(j), buf)
+	}
+	/*
+		for _, j := range lista {
+			for _, k := range lista {
+				for _, m := range lista {
+					var key = make([]byte, 0)
+					key = append(key, Int32to3bytes(j)...)
+					key = append(key, Int32to3bytes(k)...)
+					key = append(key, Int32to3bytes(m)...)
+					h.Db.Set(key, EncodeAuto())
+				}
+			}
 		}
 	*/
 }
@@ -111,53 +237,235 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
 	if string(ctx.Method()) == "GET" {
 		switch string(ctx.Path()) {
+		case "/autoCuad":
+
+			var p []int32
+			if err := json.Unmarshal(ctx.QueryArgs().Peek("c"), &p); err == nil {
+
+				var bn []int32
+				var key []byte
+				var Search []int32
+
+				bn = p[0:2]
+				Search = p[2:len(p)]
+
+				key = GetKey(bn)
+				val, _ := h.Db.Get(key)
+				if len(val) > 0 {
+					fmt.Println("BUSQUEDA POR CUAD", Search)
+				} else {
+					fmt.Println("NOT FOUND DB-CUAD KEY", key)
+				}
+
+			}
+
 		case "/auto":
 
-			var lenstr int = ParamInt(ctx.QueryArgs().Peek("l"))
-			var b strings.Builder
+			now := time.Now()
+			var p []int32
+			if err := json.Unmarshal(ctx.QueryArgs().Peek("c"), &p); err == nil {
 
-			if lenstr == 0 {
+				var leng int = ParamInt(ctx.QueryArgs().Peek("l"))
+				var Auto []byte
+				var foundAuto bool
+				var bn []int32
+				var key []byte
+				var Search []int32
+				var j int
+				var i uint8
+				var Count int = 0
+
+				var b strings.Builder
 				b.Write([]byte{91})
-				s, err := h.AutoComplete1(string(ctx.QueryArgs().Peek("p")))
-				if err {
-					b.Write(s)
+				for {
+
+					j = 1
+					bn = p[0 : len(p)-leng]
+					Search = p[len(p)-leng : len(p)]
+
+					if Auto, foundAuto = h.AutoComplete[string(bn)]; foundAuto {
+
+						fmt.Println("AutoComplete str", string(bn))
+						for i = 0; i < Auto[0]; i++ {
+							InfoAuto, w := DecodeSpecialBytes(Auto[j:j+2], 200)
+							j = j + w
+							CantPal, CantId, Tipo := DecPal(InfoAuto)
+							for m := 0; m < CantPal; m++ {
+								IdPal := GetIntBytesU32(Auto[j : j+int(CantId)+2])
+								j = j + int(CantId) + 2
+								CantNombre := Auto[j]
+								Nombre := Auto[j+1 : j+int(CantNombre)+1]
+								j = j + int(CantNombre) + 1
+								if leng == 0 {
+									if Count > 0 {
+										b.Write([]byte{44})
+									}
+									fmt.Fprintf(&b, "{'I':%v,'N':%v,'T':%v}", IdPal, string(Nombre), Tipo)
+									Count++
+								} else {
+									fmt.Println("BUSCAR MEMORY IdPal:", IdPal, "Nombre:", Nombre, "Tipo", Tipo, "SEARCH:", Search)
+								}
+							}
+						}
+
+					} else {
+
+						key = GetKey(bn)
+						val, _ := h.Db.Get(key)
+						if len(val) > 0 {
+
+							for i = 0; i < val[0]; i++ {
+								InfoAuto, w := DecodeSpecialBytes(val[j:j+2], 200)
+								j = j + w
+								CantPal, CantId, Tipo := DecPal(InfoAuto)
+								for m := 0; m < CantPal; m++ {
+									IdPal := GetIntBytesU32(val[j : j+int(CantId)+2])
+									j = j + int(CantId) + 2
+									CantNombre := val[j]
+									Nombre := val[j+1 : j+int(CantNombre)+1]
+									j = j + int(CantNombre) + 1
+									if leng == 0 {
+										if Count > 0 {
+											b.Write([]byte{44})
+										}
+										fmt.Fprintf(&b, "{'I':%v,'N':%v,'T':%v}", IdPal, string(Nombre), Tipo)
+										Count++
+									} else {
+										fmt.Println("BUSCAR DATABASE IdPal:", IdPal, "Nombre:", Nombre, "Tipo", Tipo, "SEARCH:", Search)
+									}
+								}
+							}
+
+						} else {
+							fmt.Println("DATABASE OUT")
+						}
+					}
+					if leng == 0 {
+						break
+					}
+					leng--
 				}
 				b.Write([]byte{93})
 				fmt.Fprint(ctx, b.String())
 			} else {
-
+				fmt.Println("Err JSONDECODE", err)
+				fmt.Fprint(ctx, "Err JSONDECODE")
 			}
+			fmt.Println("time elapse:", time.Since(now))
 
 		default:
 			ctx.Error("Not Found", fasthttp.StatusNotFound)
 		}
 	}
 }
-
-func (h *MyHandler) AutoComplete1(str string) ([]byte, bool) {
-
-	var Auto string
-	var foundAuto bool
-	if Auto, foundAuto = h.AutoComplete[str]; foundAuto {
-		fmt.Println(Auto)
-	} else {
-		var val int = 0
-		for i, v := range str {
-			inArray(h.Letters, v)
-		}
-		val, _ := h.Db.Get(key)
-		if len(val) > 0 {
-			fmt.Println(val)
-		}
-	}
-	return "", true
+func WriteResponse([]byte) {
 
 }
+func GetIntBytesU32(val []uint8) uint32 {
+	switch len(val) {
+	case 1:
+		return Bytes1toInt32(val[0:1])
+	case 2:
+		return Bytes2toInt32(val[0:2])
+	case 3:
+		return Bytes3toInt32(val[0:3])
+	case 4:
+		return Bytes4toInt32(val[0:4])
+	default:
+		return 0
+	}
+}
+func Bytes1toInt32(b []uint8) uint32 {
+	bytes := make([]byte, 3, 4)
+	bytes = append(bytes, b...)
+	return binary.BigEndian.Uint32(bytes)
+}
+func Bytes2toInt32(b []uint8) uint32 {
+	bytes := make([]byte, 2, 4)
+	bytes = append(bytes, b...)
+	return binary.BigEndian.Uint32(bytes)
+}
+func Bytes3toInt32(b []uint8) uint32 {
+	bytes := make([]byte, 1, 4)
+	bytes = append(bytes, b...)
+	return binary.BigEndian.Uint32(bytes)
+}
+func Bytes4toInt32(b []uint8) uint32 {
+	return binary.BigEndian.Uint32(b)
+}
+func GetCountBytesInt32(num uint32) int {
 
+	if num <= 255 {
+		return 1
+	}
+	if num <= 65535 {
+		return 2
+	}
+	if num <= 16777215 {
+		return 3
+	}
+	return 4
+}
+func AddBytes(buf []byte, bytes []byte) []byte {
+	return append(buf, bytes...)
+}
+func IntToBytes(n int) []byte {
+	if n == 0 {
+		return []byte{0}
+	}
+	return big.NewInt(int64(n)).Bytes()
+}
+func GetKey(i []int32) []byte {
+	var buf []byte = make([]byte, 0)
+	var leng, x int = len(i), 0
+	for {
+
+		if i[x] < 256 {
+			buf = append(buf, uint8(i[x]))
+		}
+		if i[x] < 65536 {
+			b := make([]byte, 2)
+			binary.LittleEndian.PutUint16(b, uint16(i[x]))
+			buf = append(buf, Reverse(b)...)
+		}
+		if i[x] < 16777216 {
+			b := make([]byte, 4)
+			binary.LittleEndian.PutUint32(b, uint32(i[x]))
+			buf = append(buf, Reverse(b[0:3])...)
+		}
+		x++
+		if leng == x {
+			break
+		}
+	}
+	return buf
+}
+func Inttobytes(i int32) []byte {
+	if i < 256 {
+		return []byte{uint8(i)}
+	} else if i < 65535 {
+		b := make([]byte, 2)
+		binary.LittleEndian.PutUint16(b, uint16(i))
+		return Reverse(b)
+	} else if i < 16777216 {
+		b := make([]byte, 4)
+		binary.LittleEndian.PutUint32(b, uint32(i))
+		return Reverse(b[0:3])
+	} else {
+		b := make([]byte, 4)
+		binary.LittleEndian.PutUint32(b, uint32(i))
+		return Reverse(b)
+	}
+}
 func Int32tobytes(i uint32) []byte {
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, i)
 	return Reverse(b)
+}
+func Int32to3bytes(i int32) []byte {
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, uint32(i))
+	return Reverse(b[0:3])
 }
 func Reverse(numbers []uint8) []uint8 {
 	for i := 0; i < len(numbers)/2; i++ {
@@ -170,6 +478,13 @@ func ParamInt(data []byte) int {
 	var x int
 	for _, c := range data {
 		x = x*10 + int(c-'0')
+	}
+	return x
+}
+func ParamInt32(data []byte) int32 {
+	var x int32
+	for _, c := range data {
+		x = x*10 + int32(c-'0')
 	}
 	return x
 }
@@ -215,22 +530,3 @@ func run(con context.Context, c *MyHandler, stdout io.Writer) error {
 }
 
 // DAEMON //
-
-/*
-
-
-
-rot13 := func(r rune) rune {
-	switch {
-	case r >= 'A' && r <= 'Z':
-		return 'A' + (r-'A'+13)%26
-	case r >= 'a' && r <= 'z':
-		return 'a' + (r-'a'+13)%26
-	}
-	return r
-}
-fmt.Println(strings.Map(rot13, "'Twas brillig and the slithy gopher..."))
-
-
-
-*/
