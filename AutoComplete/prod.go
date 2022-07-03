@@ -207,7 +207,7 @@ func (h *MyHandler) SaveDb() {
 
 	lista := make([]int32, 0, 100)
 
-	for i := 140910; i < 141010; i++ {
+	for i := 140910; i <= 141010; i++ {
 		lista = append(lista, int32(i))
 	}
 
