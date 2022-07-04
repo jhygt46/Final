@@ -219,7 +219,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 				key = GetKey2(bn, ParamBytes(ctx.QueryArgs().Peek("u")))
 				val, _ := h.Db.Get(key)
 				if len(val) > 0 {
-					WriteResponse(&val, 0, &b, p[2:len(p)], 1)
+					WriteResponse(&val, 0, &b, p[2:len(p)])
 				} else {
 					fmt.Println("NOT FOUND DB-CUAD KEY", key)
 				}
