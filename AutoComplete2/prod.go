@@ -252,7 +252,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 					}
 
 					if Auto, foundAuto = h.AutoComplete[string(bn)]; foundAuto {
-						fmt.Fprint(ctx, Auto)
+						b.WriteString(Auto)
 					} else {
 						key = GetKey(bn)
 						val, _ := h.Db.Get(key)
