@@ -193,7 +193,7 @@ func (h *MyHandler) SaveDb() {
 				key = append(key, Int32to3bytes(j)...)
 				key = append(key, Int32to3bytes(k)...)
 				key = append(key, Int32to3bytes(m)...)
-				h.Db.Set(key, bytes)
+				h.Db.Set(key, []byte(bytes))
 				Count++
 			}
 		}
