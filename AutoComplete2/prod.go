@@ -206,29 +206,29 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 	if string(ctx.Method()) == "GET" {
 		switch string(ctx.Path()) {
 		case "/autoCuad":
+			/*
+				var p []int32
+				if err := json.Unmarshal(ctx.QueryArgs().Peek("c"), &p); err == nil {
 
-			var p []int32
-			if err := json.Unmarshal(ctx.QueryArgs().Peek("c"), &p); err == nil {
+					var bn []int32
+					var key []byte
+					var b strings.Builder
+					b.Write([]byte{91})
 
-				var bn []int32
-				var key []byte
-				var b strings.Builder
-				b.Write([]byte{91})
+					bn = p[0:2]
+					key = GetKey2(bn, ParamBytes(ctx.QueryArgs().Peek("u")))
+					val, _ := h.Db.Get(key)
+					if len(val) > 0 {
+						WriteResponse(&val, 0, &b, p[2:len(p)])
+					} else {
+						fmt.Println("NOT FOUND DB-CUAD KEY", key)
+					}
 
-				bn = p[0:2]
-				key = GetKey2(bn, ParamBytes(ctx.QueryArgs().Peek("u")))
-				val, _ := h.Db.Get(key)
-				if len(val) > 0 {
-					WriteResponse(&val, 0, &b, p[2:len(p)])
-				} else {
-					fmt.Println("NOT FOUND DB-CUAD KEY", key)
+					b.Write([]byte{93})
+					fmt.Fprint(ctx, b.String())
+
 				}
-
-				b.Write([]byte{93})
-				fmt.Fprint(ctx, b.String())
-
-			}
-
+			*/
 		case "/auto":
 
 			//now := time.Now()
