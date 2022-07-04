@@ -166,6 +166,7 @@ func DecPal(b int) (CantPal int, CantId int, Tipo int) {
 func (h *MyHandler) SaveDb() {
 
 	lista := make([]int32, 0, 101)
+	Count := 0
 
 	for i := 140910; i <= 141010; i++ {
 		lista = append(lista, int32(i))
@@ -180,21 +181,25 @@ func (h *MyHandler) SaveDb() {
 			var b strings.Builder
 			fmt.Fprintf(&b, "%c%c", j, k)
 			h.AutoComplete[b.String()] = bytes
+			Count++
 		}
 	}
-	/*
-		for _, j := range lista {
-			for _, k := range lista {
-				for _, m := range lista {
-					var key = make([]byte, 0)
-					key = append(key, Int32to3bytes(j)...)
-					key = append(key, Int32to3bytes(k)...)
-					key = append(key, Int32to3bytes(m)...)
-					h.Db.Set(key, bytes)
-				}
+	fmt.Printf("MEMORIA CANTIDAD (%v) LEN (%v) TOTAL (%v)\n", Count, len(string(bytes)), Count*len(string(bytes)))
+	Count = 0
+	for _, j := range lista {
+		for _, k := range lista {
+			for _, m := range lista {
+				var key = make([]byte, 0)
+				key = append(key, Int32to3bytes(j)...)
+				key = append(key, Int32to3bytes(k)...)
+				key = append(key, Int32to3bytes(m)...)
+				h.Db.Set(key, bytes)
+				Count++
 			}
 		}
-	*/
+	}
+	fmt.Printf("DISCO CANTIDAD (%v) LEN (%v) TOTAL (%v)\n", Count, len(string(bytes)), Count*len(string(bytes)))
+
 }
 func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
