@@ -257,7 +257,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 						key = GetKey(bn)
 						val, _ := h.Db.Get(key)
 						if len(val) > 0 {
-							WriteResponse(&val, leng, &b, Search)
+							fmt.Fprint(ctx, string(val))
 						} else {
 							fmt.Println("DATABASE OUT", bn)
 						}
