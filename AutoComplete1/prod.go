@@ -75,7 +75,6 @@ func main() {
 	pass := &MyHandler{
 		Db:           db,
 		AutoComplete: make(map[string][]byte, 0),
-		Letters:      make([]int32, 0, 10),
 	}
 
 	pass.SaveDb()
