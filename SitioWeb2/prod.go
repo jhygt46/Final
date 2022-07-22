@@ -89,7 +89,7 @@ func (h *MyHandler) requestHandler(ctx *fasthttp.RequestCtx) {
 		fmt.Fprintf(ctx, "%s\n", ctx.Request.Body())
 	} else {
 		ctx.SetContentType("text/html; charset=utf-8")
-		fmt.Fprintf(ctx, "<html><head><link rel='shortcut icon' type='image/x-icon' href='https://www.usinox.cl/favicon.ico'></head><body style='background:#f00'></body></html>")
+		fmt.Fprintf(ctx, "<html><head></head><body></body></html>")
 	}
 }
 
