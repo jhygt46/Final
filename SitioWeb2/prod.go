@@ -42,7 +42,7 @@ func main() {
 	if runtime.GOOS == "windows" {
 		port = ":81"
 	} else {
-		port = ":80"
+		port = ":443"
 	}
 
 	con := context.Background()
@@ -71,7 +71,7 @@ func main() {
 		}
 	}()
 	go func() {
-		err := s.ListenAndServeTLS(port, "", "")
+		err := s.ListenAndServe(port)
 		if err != nil {
 			log.Fatalln(err)
 		}
