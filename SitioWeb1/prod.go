@@ -9,7 +9,7 @@ import (
 	"os"
 	"os/signal"
 
-	"runtime"
+	//"runtime"
 	"syscall"
 	"time"
 
@@ -27,28 +27,18 @@ type MyHandler struct {
 
 func main() {
 
-	var port string
-	var cert string
-	if runtime.GOOS == "windows" {
-		port = ":81"
-		cert = "localhost:443"
-	} else {
-		port = ":443"
-		cert = "localhost:443"
-	}
-
 	pass := &MyHandler{
 		Conf: Config{},
 	}
 
-	cert, priv, err := fasthttp.GenerateTestCertificate(cert)
+	cert, priv, err := fasthttp.GenerateTestCertificate("localhost:8080")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	s := &fasthttp.Server{
 		Handler: pass.requestHandler,
-		Name:    "HTTP2-TEST",
+		Name:    "http2 test",
 	}
 	err = s.AppendCertEmbed(cert, priv)
 	if err != nil {
@@ -56,6 +46,15 @@ func main() {
 	}
 
 	http2.ConfigureServer(s, http2.ServerConfig{Debug: true})
+
+	/*
+		var port string
+		if runtime.GOOS == "windows" {
+			port = ":81"
+		} else {
+			port = ":80"
+		}
+	*/
 
 	con := context.Background()
 	con, cancel := context.WithCancel(con)
@@ -83,7 +82,7 @@ func main() {
 		}
 	}()
 	go func() {
-		err = s.ListenAndServeTLS(port, "", "")
+		err = s.ListenAndServeTLS(":8443", "", "")
 		if err != nil {
 			log.Fatalln(err)
 		}
