@@ -42,7 +42,7 @@ func main() {
 	if runtime.GOOS == "windows" {
 		port = ":81"
 	} else {
-		port = ":443"
+		port = ":80"
 	}
 
 	con := context.Background()
