@@ -9,6 +9,7 @@ import (
 )
 
 func requestHandler(ctx *fasthttp.RequestCtx) {
+	fmt.Println("HOLA")
 	fmt.Fprintf(ctx, "Hello, world!\n")
 }
 
