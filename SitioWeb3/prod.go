@@ -9,13 +9,13 @@ import (
 )
 
 func requestHandler(ctx *fasthttp.RequestCtx) {
-	fmt.Println("HOLA")
 	fmt.Fprintf(ctx, "Hello, world!\n")
 }
 
 func main() {
 	secureMiddleware := secure.New(secure.Options{
 		SSLRedirect: true,
+		SSLHost:     "localhost:443", // This is optional in production. The default behavior is to just redirect the request to the HTTPS protocol. Example: http://github.com/some_page would be redirected to https://github.com/some_page.
 	})
 
 	secureHandler := secureMiddleware.Handler(requestHandler)
