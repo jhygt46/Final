@@ -15,18 +15,17 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 func main() {
 	secureMiddleware := secure.New(secure.Options{
 		SSLRedirect: true,
-		SSLHost:     "localhost:8443", // This is optional in production. The default behavior is to just redirect the request to the HTTPS protocol. Example: http://github.com/some_page would be redirected to https://github.com/some_page.
 	})
 
 	secureHandler := secureMiddleware.Handler(requestHandler)
 
 	// HTTP
 	go func() {
-		log.Fatal(fasthttp.ListenAndServe(":8080", secureHandler))
+		log.Fatal(fasthttp.ListenAndServe(":80", secureHandler))
 	}()
 
 	// HTTPS
 	// To generate a development cert and key, run the following from your *nix terminal:
 	// go run $GOROOT/src/pkg/crypto/tls/generate_cert.go --host="localhost"
-	log.Fatal(fasthttp.ListenAndServeTLS(":8443", "cert.pem", "key.pem", secureHandler))
+	log.Fatal(fasthttp.ListenAndServeTLS(":443", "/etc/letsencrypt/live/www.draescorza.cl/fullchain.pem", "/etc/letsencrypt/live/www.draescorza.cl/privkey.pem", secureHandler))
 }
