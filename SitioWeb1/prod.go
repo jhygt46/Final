@@ -31,18 +31,9 @@ func main() {
 		Conf: Config{},
 	}
 
-	cert, priv, err := fasthttp.GenerateTestCertificate("localhost:8080")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	s := &fasthttp.Server{
 		Handler: pass.requestHandler,
 		Name:    "http2 test",
-	}
-	err = s.AppendCertEmbed(cert, priv)
-	if err != nil {
-		log.Fatalln(err)
 	}
 
 	http2.ConfigureServer(s, http2.ServerConfig{Debug: true})
@@ -82,7 +73,7 @@ func main() {
 		}
 	}()
 	go func() {
-		err = s.ListenAndServeTLS(":8443", "", "")
+		err := s.ListenAndServeTLS(":81", "", "")
 		if err != nil {
 			log.Fatalln(err)
 		}
