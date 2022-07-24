@@ -8,12 +8,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-
-	//"runtime"
+	"runtime"
 	"syscall"
 	"time"
 
-	"github.com/dgrr/http2"
 	"github.com/valyala/fasthttp"
 )
 
@@ -27,25 +25,16 @@ type MyHandler struct {
 
 func main() {
 
+	var port string
+	if runtime.GOOS == "windows" {
+		port = ":81"
+	} else {
+		port = ":81"
+	}
+
 	pass := &MyHandler{
 		Conf: Config{},
 	}
-
-	s := &fasthttp.Server{
-		Handler: pass.requestHandler,
-		Name:    "http2 test",
-	}
-
-	http2.ConfigureServer(s, http2.ServerConfig{Debug: true})
-
-	/*
-		var port string
-		if runtime.GOOS == "windows" {
-			port = ":81"
-		} else {
-			port = ":80"
-		}
-	*/
 
 	con := context.Background()
 	con, cancel := context.WithCancel(con)
@@ -73,10 +62,7 @@ func main() {
 		}
 	}()
 	go func() {
-		err := s.ListenAndServeTLS(":81", "", "")
-		if err != nil {
-			log.Fatalln(err)
-		}
+		fasthttp.ListenAndServe(port, pass.HandleFastHTTP)
 	}()
 	if err := run(con, pass, os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
@@ -85,14 +71,20 @@ func main() {
 
 }
 
-func (h *MyHandler) requestHandler(ctx *fasthttp.RequestCtx) {
-	fmt.Printf("%s\n", ctx.Request.Header.Header())
-	if ctx.Request.Header.IsPost() {
-		fmt.Fprintf(ctx, "%s\n", ctx.Request.Body())
-	} else {
-		ctx.SetContentType("text/html; charset=utf-8")
-		fmt.Fprintf(ctx, "<html><head><link rel='shortcut icon' type='image/x-icon' href='https://www.usinox.cl/favicon.ico'></head><body style='background:#f00'></body></html>")
+func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
+
+	if string(ctx.Method()) == "GET" {
+		switch string(ctx.Path()) {
+		case "/":
+			h.Count++
+			fmt.Fprintf(ctx, "HOLA1")
+		case "/stats":
+			fmt.Fprintf(ctx, "Count %v", h.Count)
+		default:
+			ctx.Error("Not Found", fasthttp.StatusNotFound)
+		}
 	}
+
 }
 
 // DAEMON //

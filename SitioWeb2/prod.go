@@ -27,9 +27,9 @@ func main() {
 
 	var port string
 	if runtime.GOOS == "windows" {
-		port = ":81"
+		port = ":82"
 	} else {
-		port = ":81"
+		port = ":82"
 	}
 
 	pass := &MyHandler{
@@ -77,7 +77,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
 		case "/":
 			h.Count++
-			fmt.Fprintf(ctx, "HOLA")
+			fmt.Fprintf(ctx, "HOLA2")
 		case "/stats":
 			fmt.Fprintf(ctx, "Count %v", h.Count)
 		default:
