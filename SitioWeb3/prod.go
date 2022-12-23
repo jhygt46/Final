@@ -28,5 +28,5 @@ func main() {
 	// HTTPS
 	// To generate a development cert and key, run the following from your *nix terminal:
 	// go run $GOROOT/src/pkg/crypto/tls/generate_cert.go --host="localhost"
-	log.Fatal(fasthttp.ListenAndServeTLS(":443", "/etc/letsencrypt/live/www.draescorza.cl/fullchain.pem", "/etc/letsencrypt/live/www.draescorza.cl/privkey.pem", secureHandler))
+	log.Fatal(fasthttp.ListenAndServeTLS(":443", "/etc/letsencrypt/live/www.redigo.cl/fullchain.pem", "/etc/letsencrypt/live/www.redigo.cl/privkey.pem", secureHandler))
 }

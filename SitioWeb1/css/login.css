@@ -1,0 +1,196 @@
+html {
+    height: 100%;
+}
+body {
+    margin: 0px;
+    padding: 0px;
+    background: #FAFAFA;
+    display:block;
+    font-family: 'Open Sans Condensed', sans-serif;
+}
+.cont_login {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+.cont_login .login {
+    max-width: 300px;
+    width: 85%;
+}
+.cont_login .login .titulo{
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 34px;
+    color: #E34A25;
+    font-weight: bold;
+}
+.cont_login .login .form_login{
+    display: block;
+    background: #fff;
+    margin: 10px 0px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.31);
+    padding: 15px 15px 10px 15px;
+}
+.cont_login .login .form_login .data{
+
+}
+.cont_login .login .form_login .data .txt{
+    text-align: left;
+    font-size: 16px;
+    color: #666;
+}
+.cont_login .login .form_login .data .input{
+    padding-bottom: 15px;
+}
+.cont_login .login .form_login .data .input input{
+    width: 100%;
+    height: 35px;
+    border: 1px solid #ccc;
+    background: #FCFCFC;
+    padding: 5px;
+}
+.cont_login .login .form_login .button{
+    width: 100%;
+    height: 50px;
+    position: relative;
+}
+.cont_login .login .form_login .button .btn{
+    position: absolute;
+    right: 0px;
+    top: 0px;
+}
+.cont_login .login .form_login .button .btn input{
+    background: #E34A25;
+    width: 85px;
+    height: 35px;
+    border: none;
+    color: #fff;
+    box-shadow: 1px 1px 5px #B6B6B6;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.cont_login .login .form_login .button .recordar{
+    position: absolute;
+    width: calc(100% - 110px);
+    height: 33px;
+    left: 20px;
+    top: 0px;
+}
+.cont_login .login .form_login .button .recordar_checkbox{
+    position: absolute;
+    width: 15px;
+    height: 35px;
+    left: 0px;
+    top: 0px;
+}
+.cont_login .login .form_login .button .recordar_checkbox input{
+    width: 15px;
+    height: 15px;
+}
+.cont_login .login .form_login .button .msg{
+    position: absolute;
+    width: 100%;
+    height: 18px;
+    left: 0px;
+    top: 35px;
+    font-size: 13px;
+}
+.cont_login .login .ltpass{
+    text-align: left;
+}
+.cont_login .login .ltpass a{   
+    font-size: 16px;
+    color: #E34A25;
+    font-weight: bold;
+    text-decoration: none;
+    padding-left: 5px;
+}
+
+
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td,span{
+	margin:0;
+	padding:0;
+	outline:none;
+}
+pre{
+	font-size: 2em;
+}
+table{
+	/*border-collapse:collapse;
+	border-spacing:0;*/
+	width:100%;
+}
+fieldset,img, abbr, acronym{
+	border:0;
+}
+address,caption,cite,code,dfn,th,var{
+	font-style:normal;
+	font-weight:normal;
+}
+ol,ul,dl{
+	list-style:none;
+}
+caption,th{
+	text-align:left;
+}
+img{
+	border:0;
+}
+h1,h2,h3,h4,h5,h6{
+	font-size:1em;
+	font-size:100%;
+	font-weight:normal;
+}
+a{
+	outline:none;
+}
+/*PROPIEDADES*******************************/
+.clearfix:after{
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
+}
+.clearfix{
+	display: inline-block;
+}
+/*\*/* html .clearfix {
+    height: 1%;
+}
+.clearfix {
+    display: block;
+}/**/
+.margen_bloque{
+    margin-right:10px;
+}
+.vhalign{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.valign{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.halign{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+::-webkit-scrollbar-track-piece {
+  background: #eee;
+}
+::-webkit-scrollbar-thumb {
+  background: #888;
+}

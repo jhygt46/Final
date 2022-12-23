@@ -12,6 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"html/template"
+
+	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 )
 
@@ -22,20 +25,33 @@ type MyHandler struct {
 	Conf  Config `json:"Conf"`
 	Count uint64 `json:"Count"`
 }
+type Data struct {
+	Id     int    `json:"Id"`
+	Nombre string `json:"Nombre"`
+}
+
+var (
+	imgHandler fasthttp.RequestHandler
+	cssHandler fasthttp.RequestHandler
+	jsHandler  fasthttp.RequestHandler
+	port       string
+)
 
 func main() {
 
-	var port string
 	if runtime.GOOS == "windows" {
+		imgHandler = fasthttp.FSHandler("C:/Go/Final/SitioWeb1/img", 1)
+		cssHandler = fasthttp.FSHandler("C:/Go/Final/SitioWeb1/css", 1)
+		jsHandler = fasthttp.FSHandler("C:/Go/Final/SitioWeb1/js", 1)
 		port = ":81"
 	} else {
-		port = ":81"
+		imgHandler = fasthttp.FSHandler("/var/Pelao/img", 1)
+		cssHandler = fasthttp.FSHandler("/var/Pelao/css", 1)
+		jsHandler = fasthttp.FSHandler("/var/Pelao/js", 1)
+		port = ":80"
 	}
 
-	pass := &MyHandler{
-		Conf: Config{},
-	}
-
+	pass := &MyHandler{Conf: Config{}}
 	con := context.Background()
 	con, cancel := context.WithCancel(con)
 	signalChan := make(chan os.Signal, 1)
@@ -62,13 +78,62 @@ func main() {
 		}
 	}()
 	go func() {
-		fasthttp.ListenAndServe(port, pass.HandleFastHTTP)
+		r := router.New()
+		r.GET("/", Index)
+		r.GET("/css/{name}", Css)
+		r.GET("/js/{name}", Js)
+		r.GET("/img/{name}", Img)
+		r.GET("/json/{name}/{cant}", Json)
+		fasthttp.ListenAndServe(port, r.Handler)
 	}()
 	if err := run(con, pass, os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 
+}
+
+func Js(ctx *fasthttp.RequestCtx) {
+	jsHandler(ctx)
+}
+func Css(ctx *fasthttp.RequestCtx) {
+	cssHandler(ctx)
+}
+func Img(ctx *fasthttp.RequestCtx) {
+	imgHandler(ctx)
+}
+
+func Index(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("text/html; charset=utf-8")
+	t, err := TemplatePage("html/index.html")
+	ErrorCheck(err)
+	err = t.Execute(ctx, nil)
+	ErrorCheck(err)
+}
+func Json(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+
+	name := ctx.UserValue("name")
+	cant := ctx.UserValue("cant")
+
+	fmt.Println(name, cant)
+
+	m1 := "[{\"Id\":1,\"Nombre\":\"Abc\"},{\"Id\":2,\"Nombre\":\"Eds\"}]"
+	fmt.Fprintf(ctx, m1)
+}
+
+func ErrorCheck(e error) {
+	if e != nil {
+		fmt.Println("ERROR:", e)
+	}
+}
+func TemplatePage(v string) (*template.Template, error) {
+	t, err := template.ParseFiles(v)
+	if err != nil {
+		log.Print(err)
+		return t, err
+	}
+	return t, nil
 }
 
 func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
