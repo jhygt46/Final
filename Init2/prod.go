@@ -19,7 +19,6 @@ import (
 	lediscfg "github.com/ledisdb/ledisdb/config"
 	"github.com/ledisdb/ledisdb/ledis"
 
-	"github.com/mithorium/secure-fasthttp"
 	"github.com/valyala/fasthttp"
 )
 
@@ -87,7 +86,7 @@ func main() {
 		port = ":81"
 		cfg.DataDir = "C:/Go/LedisDB/Init"
 	} else {
-		port = ":444"
+		port = ":81"
 		cfg.DataDir = "/var/Go/LedisDB/Init"
 	}
 
@@ -135,19 +134,14 @@ func main() {
 	}()
 	go func() {
 
-		if runtime.GOOS == "windows" {
-			fasthttp.ListenAndServe(port, pass.HandleFastHTTP)
-		} else {
-			secureMiddleware := secure.New(secure.Options{SSLRedirect: true})
-			secureHandler := secureMiddleware.Handler(pass.HandleFastHTTP)
-			fasthttp.ListenAndServeTLS(port, "/etc/letsencrypt/live/www.redigo.cl/fullchain.pem", "/etc/letsencrypt/live/www.redigo.cl/privkey.pem", secureHandler)
-		}
+		fasthttp.ListenAndServe(port, pass.HandleFastHTTP)
 
 	}()
 	if err := run(con, pass, os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
+
 }
 
 func (h *MyHandler) SaveDb(zona uint8) {
@@ -287,8 +281,6 @@ func (h *MyHandler) SaveDb(zona uint8) {
 
 	ecc := EncodeCuadsChilds(ListaCuads)
 	x := PrintCuadsSinLen(ecc)
-
-	fmt.Println(x)
 
 	cuad1 := Cuads{UltimaActualizacion: 0, Resp: x}
 	h.Cuads[0] = cuad1
