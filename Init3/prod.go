@@ -39,9 +39,9 @@ func main() {
 	}
 
 	var pass *MyHandler
-	tipo := 0
-	numdb := 5
+	tipo := 1
 	if tipo == 0 {
+		numdb := 5
 		pass = &MyHandler{
 			Count:  0,
 			Dbs:    make([]*ledis.DB, numdb),
@@ -146,7 +146,7 @@ func (h *MyHandler) SaveDb() {
 	var j int
 	data := []byte{254, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 126}
 
-	var count1 int = 1000 / len
+	var count1 int = 1000 / (len + 1)
 	var count2 int = 100
 
 	for i := 0; i < len; i++ {
@@ -156,15 +156,21 @@ func (h *MyHandler) SaveDb() {
 				key[j] = 7
 				j += copy(key[j+1:], IntToBytesMin3(k)) + 1
 				j += copy(key[j:], IntToBytesMin3(m))
-				if h.CantDb > 0 {
-					h.Dbs[i].Set(key[:j], data)
-				}
-				if i == 0 {
-					h.Db.Set(key[:j], data)
-				}
+				h.Dbs[i].Set(key[:j], data)
 			}
 		}
 	}
+
+	for k := 0; k < count1; k++ {
+		for m := 0; m < count2; m++ {
+			j = 0
+			key[j] = 7
+			j += copy(key[j+1:], IntToBytesMin3(k)) + 1
+			j += copy(key[j:], IntToBytesMin3(m))
+			h.Db.Set(key[:j], data)
+		}
+	}
+
 	fmt.Println("SAVE DB")
 }
 
