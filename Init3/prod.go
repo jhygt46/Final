@@ -40,27 +40,21 @@ func main() {
 
 	var pass *MyHandler
 	tipo := 0
+	numdb := 5
 	if tipo == 0 {
 		pass = &MyHandler{
 			Count:  0,
-			Dbs:    make([]*ledis.DB, 5),
+			Dbs:    make([]*ledis.DB, numdb),
 			CantDb: 5,
 		}
-		for i := 0; i < 5; i++ {
-			cfg := lediscfg.NewConfigDefault()
-			cfg.DataDir = fmt.Sprintf("/var/Go/LedisDB/Init-%v", i)
-			l, _ := ledis.Open(cfg)
-			db, _ := l.Select(0)
-			pass.Dbs[i] = db
+		pass.Db = LedisConfig(0)
+		for i := 0; i < numdb; i++ {
+			pass.Dbs[i] = LedisConfig(i + 1)
 		}
 	}
 	if tipo == 1 {
 		pass = &MyHandler{}
-		cfg := lediscfg.NewConfigDefault()
-		cfg.DataDir = "/var/Go/LedisDB/Init-00"
-		l, _ := ledis.Open(cfg)
-		db, _ := l.Select(0)
-		pass.Db = db
+		pass.Db = LedisConfig(0)
 	}
 
 	pass.SaveDb()
@@ -135,9 +129,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 			ctx.Error("Not Found", fasthttp.StatusNotFound)
 		}
 	}
-
 }
-
 func (h *MyHandler) SaveDb() {
 
 	len := len(h.Dbs)
@@ -163,7 +155,14 @@ func (h *MyHandler) SaveDb() {
 			}
 		}
 	}
+}
 
+func LedisConfig(path int) *ledis.DB {
+	cfg := lediscfg.NewConfigDefault()
+	cfg.DataDir = fmt.Sprintf("/var/Go/LedisDB/Init-%v", path)
+	l, _ := ledis.Open(cfg)
+	db, _ := l.Select(0)
+	return db
 }
 
 // DAEMON //
