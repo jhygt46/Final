@@ -25,8 +25,8 @@ type MyHandler struct {
 	Db     *ledis.DB   `json:"Db"`
 	Dbs    []*ledis.DB `json:"Dbs"`
 	Conf   Config      `json:"Conf"`
-	Count  uint64      `json:"Count"`
-	CantDb uint64      `json:"CantDb"`
+	Count  int         `json:"Count"`
+	CantDb int         `json:"CantDb"`
 }
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 		pass = &MyHandler{
 			Count:  0,
 			Dbs:    make([]*ledis.DB, numdb),
-			CantDb: 5,
+			CantDb: numdb,
 		}
 		pass.Db = LedisConfig(0)
 		for i := 0; i < numdb; i++ {
@@ -114,10 +114,19 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
 			if h.CantDb > 0 {
 				h.Count++
-				val, _ := h.Dbs[h.Count%5].Get(key[:j])
-				if len(val) > 0 {
-					ctx.SetBody(val)
+				db := h.Count % (h.CantDb + 1)
+				if db == 0 {
+					val, _ := h.Db.Get(key[:j])
+					if len(val) > 0 {
+						ctx.SetBody(val)
+					}
+				} else {
+					val, _ := h.Dbs[db-1].Get(key[:j])
+					if len(val) > 0 {
+						ctx.SetBody(val)
+					}
 				}
+
 			} else {
 				val, _ := h.Db.Get(key[:j])
 				if len(val) > 0 {
@@ -147,14 +156,16 @@ func (h *MyHandler) SaveDb() {
 				key[j] = 7
 				j += copy(key[j+1:], IntToBytesMin3(k)) + 1
 				j += copy(key[j:], IntToBytesMin3(m))
-				if h.Count > 0 {
+				if h.CantDb > 0 {
 					h.Dbs[i].Set(key[:j], data)
-				} else {
+				}
+				if i == 0 {
 					h.Db.Set(key[:j], data)
 				}
 			}
 		}
 	}
+	fmt.Println("SAVE DB")
 }
 
 func LedisConfig(path int) *ledis.DB {
