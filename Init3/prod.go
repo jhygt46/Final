@@ -42,8 +42,9 @@ func main() {
 	tipo := 0
 	if tipo == 0 {
 		pass = &MyHandler{
-			Count: 5,
-			Dbs:   make([]*ledis.DB, 5),
+			Count:  0,
+			Dbs:    make([]*ledis.DB, 5),
+			CantDb: 5,
 		}
 		for i := 0; i < 5; i++ {
 			cfg := lediscfg.NewConfigDefault()
@@ -54,9 +55,7 @@ func main() {
 		}
 	}
 	if tipo == 1 {
-		pass = &MyHandler{
-			Db: *ledis.DB,
-		}
+		pass = &MyHandler{}
 		cfg := lediscfg.NewConfigDefault()
 		cfg.DataDir = "/var/Go/LedisDB/Init-00"
 		l, _ := ledis.Open(cfg)
