@@ -39,7 +39,7 @@ func main() {
 	}
 
 	var pass *MyHandler
-	tipo := 1
+	tipo := 0
 
 	if tipo == 0 {
 		numdb := 5
