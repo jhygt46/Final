@@ -22,11 +22,10 @@ type Config struct {
 	Tiempo time.Duration `json:"Tiempo"`
 }
 type MyHandler struct {
-	Db     *ledis.DB   `json:"Db"`
-	Dbs    []*ledis.DB `json:"Dbs"`
-	Conf   Config      `json:"Conf"`
-	Count  int         `json:"Count"`
-	CantDb int         `json:"CantDb"`
+	Db     *ledis.DB `json:"Db"`
+	Conf   Config    `json:"Conf"`
+	Count  int       `json:"Count"`
+	CantDb int       `json:"CantDb"`
 }
 
 func main() {
@@ -38,25 +37,7 @@ func main() {
 		port = ":8080"
 	}
 
-	var pass *MyHandler
-	tipo := 1
-	if tipo == 0 {
-		numdb := 5
-		pass = &MyHandler{
-			Count:  0,
-			Dbs:    make([]*ledis.DB, numdb),
-			CantDb: numdb,
-		}
-		pass.Db = LedisConfig(0)
-		for i := 0; i < numdb; i++ {
-			pass.Dbs[i] = LedisConfig(i + 1)
-		}
-	}
-	if tipo == 1 {
-		pass = &MyHandler{}
-		pass.Db = LedisConfig(0)
-	}
-
+	pass := &MyHandler{Db: LedisConfig(0)}
 	pass.SaveDb()
 
 	con := context.Background()
@@ -112,26 +93,9 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 			j += copy(key[j:], IntToBytesMin3(p1))
 			j += copy(key[j:], IntToBytesMin3(p2))
 
-			if h.CantDb > 0 {
-				h.Count++
-				db := h.Count % (h.CantDb + 1)
-				if db == 0 {
-					val, _ := h.Db.Get(key[:j])
-					if len(val) > 0 {
-						ctx.SetBody(val)
-					}
-				} else {
-					val, _ := h.Dbs[db-1].Get(key[:j])
-					if len(val) > 0 {
-						ctx.SetBody(val)
-					}
-				}
-
-			} else {
-				val, _ := h.Db.Get(key[:j])
-				if len(val) > 0 {
-					ctx.SetBody(val)
-				}
+			val, _ := h.Db.Get(key[:j])
+			if len(val) > 0 {
+				ctx.SetBody(val)
 			}
 
 		default:
@@ -141,25 +105,12 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 }
 func (h *MyHandler) SaveDb() {
 
-	len := len(h.Dbs)
 	key := make([]byte, 8)
 	var j int
 	data := []byte{254, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 34, 234, 234, 123, 12, 32, 64, 126}
 
-	var count1 int = 1000 / (len + 1)
+	var count1 int = 1000
 	var count2 int = 100
-
-	for i := 0; i < len; i++ {
-		for k := 0; k < count1; k++ {
-			for m := 0; m < count2; m++ {
-				j = 0
-				key[j] = 7
-				j += copy(key[j+1:], IntToBytesMin3(k)) + 1
-				j += copy(key[j:], IntToBytesMin3(m))
-				h.Dbs[i].Set(key[:j], data)
-			}
-		}
-	}
 
 	for k := 0; k < count1; k++ {
 		for m := 0; m < count2; m++ {
