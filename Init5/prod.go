@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -42,7 +43,7 @@ func main() {
 	tipo := 0
 
 	if tipo == 0 {
-		numdb := 5
+		numdb, _ := strconv.Atoi(os.Args[1])
 		pass = &MyHandler{
 			Count:  0,
 			Dbs:    make([]*ledis.DB, numdb),
