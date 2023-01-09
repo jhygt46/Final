@@ -90,7 +90,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
 			//GetIp(ctx.RemoteAddr().String())
 			ip := string(ctx.QueryArgs().Peek("ip"))
-			if !h.DDoS.Start || CreateIp(&h.DDoS.Ips, ip, 0) {
+			if !h.DDoS.Start || CreateIp(&h.DDoS.Ips, GetIp(ip), 0) {
 				ctx.SetBody([]byte{91, 48, 46, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 91})
 			} else {
 				fmt.Fprintf(ctx, "IP BLOCKEADA - ENVIAR ERROR:")
