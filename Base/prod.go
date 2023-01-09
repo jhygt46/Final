@@ -28,13 +28,10 @@ func main() {
 	if runtime.GOOS == "windows" {
 		port = ":81"
 	} else {
-		port = ":80"
+		port = ":8080"
 	}
 
 	pass := &MyHandler{}
-
-	now := time.Now()
-	fmt.Println("Time elapsed 1:", time.Since(now))
 
 	con := context.Background()
 	con, cancel := context.WithCancel(con)
