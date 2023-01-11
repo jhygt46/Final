@@ -96,8 +96,8 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 			} else {
 				fmt.Fprintf(ctx, "IP BLOCKEADA - ENVIAR ERROR:")
 			}
-			fmt.Println(h.DDoS.Ips)
-			fmt.Println(h.DDoS.Count)
+			//fmt.Println(h.DDoS.Ips)
+			//fmt.Println(h.DDoS.Count)
 			/*
 				if b1, f1 := h.DDoS.Ips.Bytes[127]; f1 {
 					if b2, f2 := b1.Bytes[0]; f2 {
@@ -113,7 +113,8 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 		case "/print":
 
 			fmt.Println(h.DDoS.Ips)
-			fmt.Fprintf(ctx, "Print")
+			fmt.Println(h.DDoS.Count)
+			fmt.Fprintf(ctx, "")
 
 		case "/save":
 
