@@ -112,7 +112,6 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 
 		case "/print":
 
-			fmt.Println(h.DDoS.Ips)
 			fmt.Println(h.DDoS.Count)
 			fmt.Fprintf(ctx, "")
 
