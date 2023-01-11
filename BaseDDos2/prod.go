@@ -118,7 +118,7 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 		case "/save":
 
 			now := time.Now()
-			cantip := h.SaveIps(0, false)
+			cantip := h.SaveIps(1, true)
 			fmt.Printf("Ips guardadas %v en %v\n", cantip, time.Since(now))
 			fmt.Fprintf(ctx, "Save")
 
