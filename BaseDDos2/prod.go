@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"runtime"
@@ -17,15 +18,14 @@ import (
 
 type DDoS struct {
 	TiempoIp  int64    `json:"TiempoIp"`
-	Ips       Ip       `json:"Ips"`
+	Ips       *Ip      `json:"Ips"`
 	Start     bool     `json:"Start"`
 	Count     uint32   `json:"Count"`
 	BlackList [][]byte `json:"BlackList"`
 }
 type Ip struct {
-	Poderacion uint8        `json:"Poderacion"`
-	Tiempo     uint16       `json:"Tiempo"`
-	Bytes      map[uint8]Ip `json:"Bytes"`
+	Tiempo uint8        `json:"Tiempo"`
+	Bytes  map[uint8]Ip `json:"Bytes"`
 }
 
 type Config struct {
@@ -46,7 +46,7 @@ func main() {
 	}
 
 	pass := &MyHandler{
-		DDoS: DDoS{Start: true, Ips: Ip{Bytes: make(map[uint8]Ip, 0)}},
+		DDoS: DDoS{Start: true, Ips: &Ip{Bytes: make(map[uint8]Ip, 0)}},
 	}
 
 	con := context.Background()
@@ -91,24 +91,13 @@ func (h *MyHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
 		case "/":
 
 			//ctx.RemoteAddr().String()
-			if !h.DDoS.Start || CreateIp(&h.DDoS, &h.DDoS.Ips, GetIp(string(ctx.QueryArgs().Peek("ip"))), 0) {
+			if !h.DDoS.Start || CreateIp(&h.DDoS, h.DDoS.Ips, GetIp(string(ctx.QueryArgs().Peek("ip"))), 0) {
 				ctx.SetBody([]byte{91, 48, 46, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 93})
 			} else {
 				fmt.Fprintf(ctx, "IP BLOCKEADA - ENVIAR ERROR:")
 			}
 			//fmt.Println(h.DDoS.Ips)
 			//fmt.Println(h.DDoS.Count)
-			/*
-				if b1, f1 := h.DDoS.Ips.Bytes[127]; f1 {
-					if b2, f2 := b1.Bytes[0]; f2 {
-						if b3, f3 := b2.Bytes[0]; f3 {
-							if b4, f4 := b3.Bytes[1]; f4 {
-								fmt.Println(b4)
-							}
-						}
-					}
-				}
-			*/
 
 		case "/print":
 
@@ -168,7 +157,8 @@ func (h *MyHandler) StartDDos() {
 func (h *MyHandler) StopDDos() {
 	h.DDoS.Start = false
 	h.DDoS.TiempoIp = 0
-	h.DDoS.Ips = Ip{Bytes: make(map[uint8]Ip, 0)}
+	h.DDoS.Ips = nil
+	h.DDoS.Ips = &Ip{Bytes: make(map[uint8]Ip, 0)}
 }
 func (h *MyHandler) SaveIps(tipo int, verb bool) int {
 
@@ -176,7 +166,7 @@ func (h *MyHandler) SaveIps(tipo int, verb bool) int {
 		n := 5000000
 		for i := 0; i < n; i++ {
 			ip := newIntToBytes4byte(i)
-			CreateIp(&h.DDoS, &h.DDoS.Ips, ip, 0)
+			CreateIp(&h.DDoS, h.DDoS.Ips, ip, 0)
 			if verb {
 				fmt.Println("Ip guardada: ", ip)
 			}
@@ -196,7 +186,7 @@ func (h *MyHandler) SaveIps(tipo int, verb bool) int {
 					ip[2] = k
 					for m := uint8(0); m <= 255; m++ {
 						ip[3] = m
-						CreateIp(&h.DDoS, &h.DDoS.Ips, ip, 0)
+						CreateIp(&h.DDoS, h.DDoS.Ips, ip, 0)
 						z++
 					}
 				}
@@ -206,6 +196,23 @@ func (h *MyHandler) SaveIps(tipo int, verb bool) int {
 			}
 		}
 		return z
+	}
+	if tipo == 2 {
+
+		rand.Seed(time.Now().UnixNano())
+
+		min := 0
+		max := 4294967295
+		num := 10000
+
+		now := time.Now()
+		for i := 0; i < num; i++ {
+			CreateIp(&h.DDoS, h.DDoS.Ips, newIntToBytes4byte(rand.Intn(max-min+1)+min), 0)
+		}
+
+		fmt.Printf("Ips guardadas %v en %v\n", num, time.Since(now))
+		fmt.Println("Total:", h.DDoS.Count)
+
 	}
 	return 0
 }
@@ -219,7 +226,7 @@ func ParamInt(data string) uint8 {
 func verIp(Pip *Ip, ip []byte, i int, start int64) (bool, uint8) {
 	if Ip, found := Pip.Bytes[ip[i]]; found {
 		if i == 3 {
-			return true, Ip.Poderacion
+			return true, 0
 		} else {
 			return verIp(&Ip, ip, i+1, start)
 		}
@@ -252,31 +259,31 @@ func CreateIp(ddos *DDoS, ips *Ip, ip []uint8, i int) bool {
 		if i < 3 {
 			return CreateIp(ddos, &LocalIp, ip, i+1)
 		} else {
-			lapsed := uint16(time.Now().UnixMilli() - ddos.TiempoIp)
-			LocalIp.Poderacion = Ponderacion(LocalIp.Poderacion, lapsed-LocalIp.Tiempo)
-			LocalIp.Tiempo = lapsed
-			if LocalIp.Poderacion < 255 {
-				ddos.BlackList = append(ddos.BlackList, ip)
-				return true
-			} else {
-				return false
-			}
+			/*
+				LocalIp.Tiempo = uint8(time.Now().UnixMilli() - ddos.TiempoIp)
+				if LocalIp.Tiempo < 255 {
+					return true
+				} else {
+					ddos.BlackList = append(ddos.BlackList, ip)
+					return false
+				}
+			*/
+			fmt.Println("Ip existente", ip)
+			return true
 		}
 	} else {
-		al := Ip{}
 		if i < 3 {
-			al.Bytes = make(map[uint8]Ip, 0)
-			ips.Bytes[ip[i]] = al
-			x := ips.Bytes[ip[i]]
-			return CreateIp(ddos, &x, ip, i+1)
+			ips.Bytes[ip[i]] = Ip{Bytes: make(map[uint8]Ip, 0)}
+			return CreateIp(ddos, intPtr(ips.Bytes[ip[i]]), ip, i+1)
 		} else {
 			ddos.Count++
-
-			al.Tiempo = uint16(time.Now().UnixMilli() - ddos.TiempoIp)
-			ips.Bytes[ip[i]] = al
+			ips.Bytes[ip[i]] = Ip{Tiempo: uint8(time.Now().UnixMilli() - ddos.TiempoIp)}
 			return true
 		}
 	}
+}
+func intPtr(ips Ip) *Ip {
+	return &ips
 }
 func newIntToBytes4byte(num int) []byte {
 
