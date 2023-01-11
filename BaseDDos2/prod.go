@@ -188,7 +188,7 @@ func (h *MyHandler) SaveIps(tipo int, verb bool) int {
 		ip := make([]byte, 4)
 		ip[2] = 0
 		ip[3] = 0
-		for i := uint8(0); i <= 255; i++ {
+		for i := uint8(0); i <= 0; i++ {
 			ip[0] = i
 			for j := uint8(0); j <= 255; j++ {
 				ip[1] = j
@@ -196,14 +196,13 @@ func (h *MyHandler) SaveIps(tipo int, verb bool) int {
 					ip[2] = k
 					for m := uint8(0); m <= 255; m++ {
 						ip[3] = m
-
+						CreateIp(&h.DDoS, &h.DDoS.Ips, ip, 0)
+						z++
 					}
 				}
-				CreateIp(&h.DDoS, &h.DDoS.Ips, ip, 0)
-				z++
-				if verb {
-					fmt.Println("Ip guardada: ", ip)
-				}
+			}
+			if verb {
+				fmt.Println("Ip: ", ip[0], ".*.*.* Guardada")
 			}
 		}
 		return z
